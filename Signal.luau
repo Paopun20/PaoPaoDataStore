@@ -34,6 +34,26 @@ function Signal:Connect(fn: (T...) -> ()): SignalConnection
 	}
 end
 
+function Signal:Wait(): T...
+	local event = Instance.new("BindableEvent")
+	local connection = self:Connect(function(...)
+		event:Fire(...)
+	end)
+	local results = {event.Event:Wait()}
+	connection:Disconnect()
+	event:Destroy()
+	return unpack(results)
+end
+
+function Signal:Once(fn: (T...) -> ()): SignalConnection
+	local connection: SignalConnection
+	connection = self:Connect(function(...)
+		fn(...)
+		connection:Disconnect()
+	end)
+	return connection
+end
+
 function Signal:Fire(...: T...)
 	for _, handler in ipairs(self._handlers) do
 		-- Use task.spawn to avoid yielding the caller if handler yields or errors
