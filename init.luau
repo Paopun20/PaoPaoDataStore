@@ -26,24 +26,25 @@ function Signal.new<T...>(): Signal<T...>
 	}, Signal)
 end
 
-function Signal:Connect(fn: (T...) -> ()): SignalConnection
-	table.insert(self._handlers, fn)
-	return {
-		Disconnect = function()
-			for i, handler in ipairs(self._handlers) do
-				if handler == fn then
-					table.remove(self._handlers, i)
-					break
-				end
-			end
-		end
-	}
+function Signal:Fire(...)
+	if type(self._handlers) ~= "table" then return end
+	for _, handler in ipairs(self._handlers) do
+		task.spawn(handler, ...)
+	end
 end
 
-function Signal:Fire(T...)
-	for _, handler in pairs(self._handlers) do
-		task.spawn(handler, T...)
-	end
+function Signal:Connect(fn)
+    table.insert(self._listeners, fn)
+    local conn = {}
+    function conn:Disconnect()
+        for i,v in ipairs(self._listeners) do
+            if v == fn then
+                table.remove(self._listeners, i)
+                break
+            end
+        end
+    end
+    return conn
 end
 
 -- ==== Types ====
