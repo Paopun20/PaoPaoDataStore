@@ -1,145 +1,122 @@
-# 🧠 PaoPao's DataStore Module (PPDB)
+PaoPao's DataStore Module (PPDB)
 
-An intelligent data storage system for Roblox designed to be easy to use, modern, and capable of supporting large-scale games.  
-Perfect for developers who want to manage player data efficiently, securely, and conveniently.
-
----
-
-## ✅ Features
-
-- ⚡ **Write Queue System**  
-  - Prevents too frequent data saves  
-  - Reduces chances of hitting Roblox DataStore limits  
-
-- 🔁 **Cross-Server Sync**  
-  - Uses MemoryStore Queue to notify other servers when data changes  
-
-- 🧬 **Data Migration Support**  
-  - Automatically updates data structures when system versions change  
-
-- 📡 **Discord Webhook Notifications**  
-  - Sends alerts immediately on errors like save failures  
-
-- 🚀 **In-Memory Cache System**  
-  - Speeds up access and reduces direct DataStore calls  
-
-- 🧹 **Event Hooks System**  
-  - Allows adding custom functions before save or after load  
+A modern, intelligent, and scalable DataStore wrapper for Roblox.
+Built for developers who want fast, safe, and cross-server synced data management — perfect for large-scale games.
 
 ---
 
-## 📦 Installation
+Features:
 
-1. Place the `PaoPaoDataStore` ModuleScript inside `ServerStorage` or `ReplicatedStorage`  
-2. Require the module with this line:
-
-```lua
-local PPDB = require(ServerStorage:WaitForChild("PaoPaoDataStore"))
-```
-
----
-
-## 🛠️ Basic Usage
-
-### 🔹 Create a store to manage data:
-
-```lua
-local ProfileStore = PPDB("PlayerData", {
-    afterInit = function(key, data)
-        print("Data loaded:", key, data)
-    end,
-    beforeSave = function(key, data)
-        print("Saving data for:", key)
-    end,
-}, 86400 * 7) -- Cache data for 7 days
-```
-
-### 🔹 Initialize default data for a player:
-
-```lua
-ProfileStore:init("player_123", {
-    Coins = 0,
-    Level = 1,
-})
-```
-
-### 🔹 Update player data:
-
-```lua
-ProfileStore:update("player_123", function(old)
-    old.Coins += 50
-    return old
-end)
-```
-
-### 🔹 Delete data:
-
-```lua
-ProfileStore:delete("player_123", function(success)
-    print("Deleted:", success)
-end)
-```
-
-### 🔹 Access data from cache:
-
-```lua
-local cached = ProfileStore:getCached("player_123")
-```
-
-### 🔹 Remove data from cache (e.g., when player leaves):
-
-```lua
-ProfileStore:leave("player_123")
-```
+- Write Queue        :  Debounces saves to prevent hitting Roblox DataStore limits.
+- Cross-Server Sync  :  Uses MemoryStore to invalidate caches instantly across all servers.
+- Data Migrations    :  Seamlessly update stored data structures between versions.
+- Discord Webhooks   :  Optional instant error and status reporting.
+- In-Memory Cache    :  Reduces DataStore calls for faster performance.
+- Event Hooks        :  Run custom code before saving or after loading.
+- Lock System        :  Prevents simultaneous writes that could corrupt data.
 
 ---
 
-## 📈 Data Migration Example
+Installation:
 
-Supports upgrading old data safely without losing information:
-
-```lua
-local migrations = {
-    [1] = function(data)
-        data.Level = data.Level or 1
-        return data
-    end,
-    [2] = function(data)
-        data.Exp = 0
-        return data
-    end
-}
-
-local Store = PPDB("UserData", nil, nil, nil, migrations)
+1. Put the PaoPaoDataStore ModuleScript into ServerStorage or ReplicatedStorage.
+2. Require it in your script:
+```luau
+   local PPDB = require(path.to.PaoPaoDataStore)
 ```
-
 ---
 
-## 📮️ Discord Webhook Notifications (Optional)
+Basic Usage:
 
-You can set a webhook URL to get alerts when errors occur:
-
-```lua
-_G.PPDBM_WEBHOOK = "https://discord.com/api/webhooks/..."
+Create a DataStore:
+```luau
+   local PlayerData = PPDB.new("PlayerData", {
+       migrations = {
+           [1] = function(data)
+               data.Coins = data.Coins or 0
+               return data
+           end,
+       },
+       retries = 3, -- Number of retries on save failure
+       hooks = {
+           beforeSave = function(key, data)
+               print("Saving data for", key)
+           end,
+           afterLoad = function(key, data)
+               print("Loaded data for", key)
+           end,
+       },
+       expire = 3600, -- Optional expiration time in seconds
+       debug  = true, -- Enable debug logging
+   })
 ```
+Initialize default data:
+```luau
+   PlayerData:init("player_123", {
+       Coins = 0,
+       Level = 1,
+   })
+```
+Update data:
+```luau
+   PlayerData:update("player_123", function(old)
+       old.Coins += 50
+       return old
+   end)
+```
+Delete data:
+```luau
+   PlayerData:delete("player_123", function(success)
+       print("Deleted:", success)
+   end)
+```
+Get cached data:
+```luau
+   local cached = PlayerData:getCached("player_123")
+```
+Remove from cache:
+```luau
+   PlayerData:leave("player_123")
+```
+---
+
+Data Migration Example:
+```luau
+   local migrations = {
+       [1] = function(data)
+           data.Level = data.Level or 1
+           return data
+       end,
+       [2] = function(data)
+           data.Exp = 0
+           return data
+       end
+   }
+
+   local Store = PPDB.new("UserData", { migrations = migrations })
+```
+---
+
+Discord Webhooks (Optional):
+```luau
+   local Store = PPDB.new("PlayerData")
+   Store:setWebhook("https://discord.com/api/webhooks/...")
+   Store:sendToDiscord(true)
+```
+---
+
+Notes & Best Practices:
+
+- Cross-server cache clearing is automatic.
+- Saves within 1 second are merged to reduce write load.
+- Use namespaced keys like "player_" .. UserId for organization.
+- For large datasets, use batchUpdate to save multiple keys at once.
 
 ---
 
-## 🚨 Developer Notes
-
-- Cache is automatically cleared across all servers when data changes somewhere else  
-- Saves within less than 1 second are delayed and combined to avoid throttling  
-- Use structured keys like `"player_" .. UserId` to organize data easily  
+Contributing:
+This project is open source — issues, ideas, and pull requests are welcome.
 
 ---
 
-## 🌍 Contributing and Support
-
-This module is open source. Feel free to contribute, suggest features, or report issues on GitHub:  
-
-👉 https://github.com/Paopun20/PaoPaoDataStore
-
----
-
-## 🧠 Enjoy making your Roblox game better!  
-**With love and care, PaoPaoDev ❤️**
+Make your Roblox game smarter — with cool module, PaoPao
