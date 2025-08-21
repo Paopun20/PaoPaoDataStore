@@ -3,7 +3,7 @@
 --!native
 
 -- ============================================================================
---  PPDBM  –  PaoPao's DataStore Module
+--  PPDB  –  PaoPao's DataStore Module
 --  A high-performance, caching, migration-friendly DataStore wrapper
 -- ============================================================================
 
@@ -62,7 +62,7 @@ local DEFAULT_EXPIRE      = 60 * 60 * 24 * 3   -- 3 days
 local WRITE_DEBOUNCE_TIME = 1                  -- seconds
 local POLL_INTERVALS      = {0.1, 0.5, 1, 2, 5}
 
-_G._PPDBM = _G._PPDBM or {
+_G._PPDB = _G._PPDB or {
     PRIVATE_DATA = {
         CORE = {
             CACHE_DB = {},
@@ -72,28 +72,28 @@ _G._PPDBM = _G._PPDBM or {
                 SUBSCRIBERS = { dbList = {}, subscribed = false },
                 INSTANCE_REGISTRY = {},
 				JSON_CACHE = {},
-				PPDBM_HEALTH_MONITOR = false,
+				PPDB_HEALTH_MONITOR = false,
             }
         }
     }
 }
 
 -- ==== Global Shared State ====
-local GLOBAL_CACHE     = _G._PPDBM.PRIVATE_DATA.CORE.CACHE_DB                        or {}
-local WRITE_QUEUES     = _G._PPDBM.PRIVATE_DATA.CORE.CORE_CACHE.WRITE_QUEUES         or {}
-local LOCKS            = _G._PPDBM.PRIVATE_DATA.CORE.CORE_CACHE.LOCKS                or {}
-local SUBSCRIBERS      = _G._PPDBM.PRIVATE_DATA.CORE.CORE_CACHE.SUBSCRIBERS          or { dbList = {}, subscribed = false }
-local INSTANCE_REGISTRY= _G._PPDBM.PRIVATE_DATA.CORE.CORE_CACHE.INSTANCE_REGISTRY    or {}
-local JSON_CACHE       = _G._PPDBM.PRIVATE_DATA.CORE.CORE_CACHE.JSON_CACHE           or {}
+local GLOBAL_CACHE     = _G._PPDB.PRIVATE_DATA.CORE.CACHE_DB                        or {}
+local WRITE_QUEUES     = _G._PPDB.PRIVATE_DATA.CORE.CORE_CACHE.WRITE_QUEUES         or {}
+local LOCKS            = _G._PPDB.PRIVATE_DATA.CORE.CORE_CACHE.LOCKS                or {}
+local SUBSCRIBERS      = _G._PPDB.PRIVATE_DATA.CORE.CORE_CACHE.SUBSCRIBERS          or { dbList = {}, subscribed = false }
+local INSTANCE_REGISTRY= _G._PPDB.PRIVATE_DATA.CORE.CORE_CACHE.INSTANCE_REGISTRY    or {}
+local JSON_CACHE       = _G._PPDB.PRIVATE_DATA.CORE.CORE_CACHE.JSON_CACHE           or {}
 
-_G._PPDBM.PRIVATE_DATA.CORE.CACHE_DB                     = GLOBAL_CACHE
-_G._PPDBM.PRIVATE_DATA.CORE.CORE_CACHE.WRITE_QUEUES      = WRITE_QUEUES
-_G._PPDBM.PRIVATE_DATA.CORE.CORE_CACHE.LOCKS             = LOCKS
-_G._PPDBM.PRIVATE_DATA.CORE.CORE_CACHE.SUBSCRIBERS       = SUBSCRIBERS
-_G._PPDBM.PRIVATE_DATA.CORE.CORE_CACHE.INSTANCE_REGISTRY = INSTANCE_REGISTRY
-_G._PPDBM.PRIVATE_DATA.CORE.CORE_CACHE.JSON_CACHE        = JSON_CACHE
+_G._PPDB.PRIVATE_DATA.CORE.CACHE_DB                     = GLOBAL_CACHE
+_G._PPDB.PRIVATE_DATA.CORE.CORE_CACHE.WRITE_QUEUES      = WRITE_QUEUES
+_G._PPDB.PRIVATE_DATA.CORE.CORE_CACHE.LOCKS             = LOCKS
+_G._PPDB.PRIVATE_DATA.CORE.CORE_CACHE.SUBSCRIBERS       = SUBSCRIBERS
+_G._PPDB.PRIVATE_DATA.CORE.CORE_CACHE.INSTANCE_REGISTRY = INSTANCE_REGISTRY
+_G._PPDB.PRIVATE_DATA.CORE.CORE_CACHE.JSON_CACHE        = JSON_CACHE
 
-local memoryQueue = MemoryStoreService:GetQueue("PPDBM_GlobalInvalidation")
+local memoryQueue = MemoryStoreService:GetQueue("PPDB_GlobalInvalidation")
 
 -- ==== Logger ====
 local function safeJSON(data: any): string
@@ -108,7 +108,7 @@ local function sendDiscord(webhook: string, level: string, message: string, colo
     if webhook == "" then return end
     local payload = safeJSON({
         embeds = {{
-            title = "🧠 PPDBM Log",
+            title = "🧠 PPDB Log",
             description = string.format("`[%s]` %s", level, message),
             color = color or 0x3498db,
             timestamp = DateTime.now():ToIsoDate(),
@@ -119,8 +119,8 @@ local function sendDiscord(webhook: string, level: string, message: string, colo
     end)
 end
 
-local function log(self: PPDBM, level: string, message: string, color: number?, sendWebhook: boolean?)
-    local prefix = string.format("[PPDBM][%s][%s]", level, os.date("%Y-%m-%d %H:%M:%S"))
+local function log(self: PPDB, level: string, message: string, color: number?, sendWebhook: boolean?)
+    local prefix = string.format("[PPDB][%s][%s]", level, os.date("%Y-%m-%d %H:%M:%S"))
     print(prefix, message)
     if sendWebhook then sendDiscord(self.Webhook, level, message, color) end
 end
@@ -197,8 +197,8 @@ if not SUBSCRIBERS.subscribed then
 end
 
 -- ==== Health Monitor ====
-if not _G._PPDBM.PRIVATE_DATA.CORE.CORE_CACHE.PPDBM_HEALTH_MONITOR then
-    _G._PPDBM.PRIVATE_DATA.CORE.CORE_CACHE.PPDBM_HEALTH_MONITOR = true
+if not _G._PPDB.PRIVATE_DATA.CORE.CORE_CACHE.PPDB_HEALTH_MONITOR then
+    _G._PPDB.PRIVATE_DATA.CORE.CORE_CACHE.PPDB_HEALTH_MONITOR = true
     task.spawn(function()
         while true do
             for name, inst in pairs(INSTANCE_REGISTRY) do
@@ -224,15 +224,15 @@ local function getWriteQueue(name: string)
 end
 
 -- ============================================================================
---  PPDBM Class
+--  PPDB Class
 -- ============================================================================
-local PPDBM = {}
-PPDBM.__index = PPDBM
+local PPDB = {}
+PPDB.__index = PPDB
 
 -- ------------------------------------------------------------------
 --  Constructor
 -- ------------------------------------------------------------------
-function PPDBM.new(name: string, opts: {
+function PPDB.new(name: string, opts: {
     hooks: HookTable?,
     expire: number?,
     retries: number?,
@@ -245,7 +245,7 @@ function PPDBM.new(name: string, opts: {
         return INSTANCE_REGISTRY[name]
     end
 
-    local self = setmetatable({}, PPDBM) :: any
+    local self = setmetatable({}, PPDB) :: any
     self._name        = name
     self._store       = DataStoreService:GetDataStore(name)
     self._hooks       = opts.hooks or {}
@@ -267,18 +267,18 @@ function PPDBM.new(name: string, opts: {
 
     INSTANCE_REGISTRY[name] = self
     table.insert(SUBSCRIBERS.dbList, self)
-    log(self, "INFO", ("Created PPDBM instance for '%s'"):format(name))
+    log(self, "INFO", ("Created PPDB instance for '%s'"):format(name))
     return self
 end
 
 -- ------------------------------------------------------------------
 --  Internal helpers
 -- ------------------------------------------------------------------
-function PPDBM:_getQueueKey(key: string): string
+function PPDB:_getQueueKey(key: string): string
     return self._name .. ":" .. key
 end
 
-local function scheduleWriteFlush(self: PPDBM, key: string)
+local function scheduleWriteFlush(self: PPDB, key: string)
     local qk = self:_getQueueKey(key)
     local entry = WRITE_QUEUES[qk]
     if not entry then
@@ -322,7 +322,7 @@ end
 -- ------------------------------------------------------------------
 --  Core API
 -- ------------------------------------------------------------------
-function PPDBM:init(key: string, defaultData: {[string]: any}, cb: ((boolean, any) -> ())?)
+function PPDB:init(key: string, defaultData: {[string]: any}, cb: ((boolean, any) -> ())?)
     if self._cache[key] then
         if cb then cb(true, self._cache[key]) end
         return
@@ -349,7 +349,7 @@ function PPDBM:init(key: string, defaultData: {[string]: any}, cb: ((boolean, an
     if cb then cb(true, data) end
 end
 
-function PPDBM:getOrInit(key: string, defaultData: {[string]: any})
+function PPDB:getOrInit(key: string, defaultData: {[string]: any})
     local cached = self._cache[key]
     if cached then return cached end
 
@@ -367,7 +367,7 @@ function PPDBM:getOrInit(key: string, defaultData: {[string]: any})
     return defaultData
 end
 
-function PPDBM:update(key: string, updateFn: (any) -> any, cb: ((boolean, any) -> ())?)
+function PPDB:update(key: string, updateFn: (any) -> any, cb: ((boolean, any) -> ())?)
     local current = self._cache[key] or {}
     current = migrateData(current, self._migrations) or current
     local new = updateFn(current)
@@ -378,7 +378,7 @@ function PPDBM:update(key: string, updateFn: (any) -> any, cb: ((boolean, any) -
     if cb then cb(true, new) end
 end
 
-function PPDBM:increment(key: string, field: string, amount: number)
+function PPDB:increment(key: string, field: string, amount: number)
     local v = (self._cache[key] and self._cache[key][field] or 0) + amount
     self:update(key, function(d)
         d[field] = (d[field] or 0) + amount
@@ -387,7 +387,7 @@ function PPDBM:increment(key: string, field: string, amount: number)
     return v
 end
 
-function PPDBM:batchUpdate(keys: {string}, updateFn: (any) -> any)
+function PPDB:batchUpdate(keys: {string}, updateFn: (any) -> any)
     local batch = {}
     for _, k in ipairs(keys) do
         local cur = self._cache[k] or {}
@@ -401,12 +401,12 @@ function PPDBM:batchUpdate(keys: {string}, updateFn: (any) -> any)
     for k in pairs(batch) do scheduleWriteFlush(self, k) end
 end
 
-function PPDBM:hasKey(key: string): boolean
+function PPDB:hasKey(key: string): boolean
     local ok, data = pcall(function() return self._store:GetAsync(key) end)
     return ok and data ~= nil
 end
 
-function PPDBM:delete(key: string, cb: ((boolean) -> ())?)
+function PPDB:delete(key: string, cb: ((boolean) -> ())?)
     local ok = pcall(function() self._store:RemoveAsync(key) end)
     if ok then
         self._cache[key] = nil
@@ -416,16 +416,16 @@ function PPDBM:delete(key: string, cb: ((boolean) -> ())?)
     if cb then cb(ok) end
 end
 
-function PPDBM:leave(key: string)
+function PPDB:leave(key: string)
     self._cache[key] = nil
 end
 
-function PPDBM:clearCache()
+function PPDB:clearCache()
     self._cache = {}
     GLOBAL_CACHE[self._name] = {}
 end
 
-function PPDBM:flushWrites()
+function PPDB:flushWrites()
     for qk, entry in pairs(WRITE_QUEUES) do
         if string.sub(qk, 1, #self._name + 1) == self._name .. ":" and entry.data then
             local key = string.sub(qk, #self._name + 2)
@@ -447,11 +447,11 @@ function PPDBM:flushWrites()
     end
 end
 
-function PPDBM:getCached(key: string): any
+function PPDB:getCached(key: string): any
     return self._cache and self._cache[key]
 end
 
-function PPDBM:setCached(key: string, data: any)
+function PPDB:setCached(key: string, data: any)
     if not self._cache then
         self._cache = {}
         GLOBAL_CACHE[self._name] = self._cache
@@ -459,18 +459,18 @@ function PPDBM:setCached(key: string, data: any)
     self._cache[key] = data
 end
 
-function PPDBM:setWebhook(url: string)
+function PPDB:setWebhook(url: string)
     self.Webhook = url
 end
 
-function PPDBM:sendToDiscord(enabled: boolean)
+function PPDB:sendToDiscord(enabled: boolean)
     self.enabledSTD = enabled
 end
 
 -- ------------------------------------------------------------------
 --  EXTENDED API
 -- ------------------------------------------------------------------
-function PPDBM:keys(): {string}
+function PPDB:keys(): {string}
     local out = {}
     for k in pairs(self._cache) do out[k] = true end
 
@@ -495,18 +495,18 @@ function PPDBM:keys(): {string}
     return list
 end
 
-function PPDBM:size(): number
+function PPDB:size(): number
     local n = 0
     for _ in pairs(self._cache) do n += 1 end
     return n
 end
 
-function PPDBM:exists(key: string): boolean
+function PPDB:exists(key: string): boolean
     local ok, data = pcall(function() return self._store:GetAsync(key) end)
     return ok and data ~= nil
 end
 
-function PPDBM:rawSet(key: string, value: any, cb: ((boolean, string?) -> ())?)
+function PPDB:rawSet(key: string, value: any, cb: ((boolean, string?) -> ())?)
     local ok, err = pcall(function() self._store:SetAsync(key, value) end)
     if ok then
         self._cache[key] = value
@@ -518,16 +518,16 @@ function PPDBM:rawSet(key: string, value: any, cb: ((boolean, string?) -> ())?)
     end
 end
 
-function PPDBM:rawGet(key: string, cb: ((boolean, any?) -> ())?)
+function PPDB:rawGet(key: string, cb: ((boolean, any?) -> ())?)
     local ok, data = pcall(function() return self._store:GetAsync(key) end)
     if cb then cb(ok, data) end
 end
 
-function PPDBM:export(): {[string]: any}
+function PPDB:export(): {[string]: any}
     return deserialize(serialize(self._cache)) or {}
 end
 
-function PPDBM:import(tbl: {[string]: any}, overwrite: boolean?)
+function PPDB:import(tbl: {[string]: any}, overwrite: boolean?)
     for k, v in pairs(tbl) do
         if overwrite or self._cache[k] == nil then
             self._cache[k] = v
@@ -536,7 +536,7 @@ function PPDBM:import(tbl: {[string]: any}, overwrite: boolean?)
     end
 end
 
-function PPDBM:stat()
+function PPDB:stat()
     local cached, queued = 0, 0
     for _ in pairs(self._cache) do cached += 1 end
     for qk in pairs(WRITE_QUEUES) do
@@ -550,12 +550,12 @@ function PPDBM:stat()
     }
 end
 
-function PPDBM:clearKey(key: string)
+function PPDB:clearKey(key: string)
     self._cache[key] = nil
     self:delete(key)
 end
 
-function PPDBM:atomicIncrement(key: string, field: string, amount: number): number?
+function PPDB:atomicIncrement(key: string, field: string, amount: number): number?
     local newValue
     local ok, err = pcall(function()
         newValue = self._store:UpdateAsync(key, function(old)
@@ -574,4 +574,29 @@ function PPDBM:atomicIncrement(key: string, field: string, amount: number): numb
     end
 end
 
-return PPDBM
+function PPDB:transaction(keys: {string}, fn: ({[string]: any}) -> {[string]: any})
+    local batch = {}
+    for _, k in ipairs(keys) do
+        batch[k] = self:getCached(k) or {}
+    end
+
+    local new = fn(batch)
+    for k, v in pairs(new) do
+        self._cache[k] = v
+        scheduleWriteFlush(self, k)
+    end
+    return new
+end
+
+game:BindToClose(function(closeReason: Enum.CloseReason)
+    for _, inst in pairs(INSTANCE_REGISTRY) do
+        if inst._writeCount > 0 then
+            log(inst, "INFO", ("Flushing writes before shutdown (%d remaining)"):format(inst._writeCount))
+            inst:flushWrites()
+        end
+    end
+
+    log(nil, "INFO", ("Game closed with reason: %s"):format(tostring(closeReason)))
+end)
+
+return PPDB
