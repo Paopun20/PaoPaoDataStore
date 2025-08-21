@@ -1,28 +1,49 @@
-# Site
+# Site Info
 site_name: PPDS Documentation
-site_description: Documentation for PaoPao's DataStore Modules
-site_author: PaoPaoDev (Paopun20)
+site_description: "Documentation for PaoPao's DataStore Modules"
+site_author: "PaoPaoDev (Paopun20)"
 site_url: https://Paopun20.github.io/PaoPaoDataStore/
 
-# repo
+# Repository Info
 repo_url: https://github.com/Paopun20/PaoPaoDataStore
-repo_name: PaoPao's DataStore module
+repo_name: "PaoPao's DataStore Module"
 
-# theme or config
+# Theme & Appearance
 theme:
   name: material
   language: en
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: teal
+    - scheme: slate
+      primary: indigo
+      accent: teal
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
   features:
     - navigation.expand
     - navigation.sections
     - navigation.top
     - search.suggest
     - search.highlight
+    - instant
+    - content.code.annotate
+  icon:
+    logo: material/database
+    repo: fontawesome/brands/git-alt
+  favicon: images/favicon.png
+  font:
+    text: Roboto
+    code: Roboto Mono
 
+# Navigation
 nav:
   - Home: index.md
-  - API Reference: api.md
+  - API Documentation: api.md
 
+# Markdown Extensions
 markdown_extensions:
   - toc:
       permalink: true
@@ -33,3 +54,9 @@ markdown_extensions:
   - footnotes
   - def_list
   - attr_list
+  - pymdownx.superfences
+  - pymdownx.tabbed
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.arithmatex
