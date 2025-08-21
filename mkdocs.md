@@ -1,31 +1,29 @@
-site_name: PPDB Documentation
+site_name: PPDS Documentation
+site_description: Documentation for PaoPao's DataStore Modules
+site_author: PaoPao
+repo_url: https://github.com/Paopun20/PaoPaoDataStore
+repo_name: PaoPao's DataStore module
+theme:
+  name: material
+  language: en
+  features:
+    - navigation.expand
+    - navigation.sections
+    - navigation.top
+    - search.suggest
+    - search.highlight
+
 nav:
   - Home: index.md
   - API Reference: api.md
-theme:
-  name: material
-  palette:
-    primary: 'deep orange'
-    accent: 'deep orange'
-  font:
-    text: 'Roboto'
-    code: 'Roboto Mono'
-  features:
-    - navigation.tabs
-    - navigation.sections
-    - search.suggest
-    - search.highlight
-    - content.tabs.link
-    - content.code.annotation
-    - content.code.copy
+
 markdown_extensions:
-  - pymdownx.highlight:
-      anchor_linenums: true
-  - pymdownx.inlinehilite
-  - pymdownx.snippets
-  - pymdownx.superfences
+  - toc:
+      permalink: true
+  - tables
   - admonition
-  - pymdownx.details
-  - pymdownx.superfences
+  - codehilite:
+      guess_lang: false
+  - footnotes
+  - def_list
   - attr_list
-  - md_in_html
