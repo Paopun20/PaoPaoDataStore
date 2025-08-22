@@ -1,6 +1,6 @@
-PaoPao's DataStore Module (PPDB)
+PaoPao's DataStore Module (PPDS)
 
-PPDB is a high-performance, caching, and migration-friendly wrapper for Roblox’s DataStoreService.
+PPDS is a high-performance, caching, and migration-friendly wrapper for Roblox’s DataStoreService.
 
 ---
 
