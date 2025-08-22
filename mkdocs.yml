@@ -2,8 +2,7 @@
 site_name: PPDS Documentation
 site_description: "Documentation for PaoPao's DataStore Modules"
 site_author: "PaoPaoDev (Paopun20)"
-site_url: https://Paopun20.github.io/PaoPaoDataStore/
-
+site_url: https://paopun20.github.io/PaoPaoDataStore/
 docs_dir: docs
 
 # Repository Info
