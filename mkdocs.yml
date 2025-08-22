@@ -1,91 +1,59 @@
-# Site Info
 site_name: PPDS Documentation
 site_description: "Documentation for PaoPao's DataStore Modules"
 site_author: "PaoPaoDev (Paopun20)"
 site_url: https://paopun20.github.io/PaoPaoDataStore/
-docs_dir: docs
-
-# Repository Info
 repo_url: https://github.com/Paopun20/PaoPaoDataStore
 repo_name: "PaoPao's DataStore Module"
 
-# Theme & Appearance
 theme:
   name: material
-  language: en
+  logo: images/logo.png
+  favicon: images/favicon.png
+  features:
+    - content.code.copy
+    - content.code.annotate
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - search.highlight
+    - search.share
+    - search.suggest
   palette:
-    - scheme: default
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
       primary: indigo
       accent: teal
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
-    - scheme: slate
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
       primary: indigo
       accent: teal
       toggle:
         icon: material/weather-night
         name: Switch to light mode
-  features:
-    - navigation.expand
-    - navigation.sections
-    - navigation.tabs
-    - navigation.top
-    - search.suggest
-    - search.highlight
-    - search.share
-    - content.code.copy
-    - content.code.annotate
-    - content.tabs.link
-  icon:
-    logo: material/database
-    repo: fontawesome/brands/git-alt
-  favicon: images/favicon.png
   font:
     text: Roboto
     code: Roboto Mono
 
-# Navigation
 nav:
   - Home: index.md
 
-# Plugins
 plugins:
   - search:
       separator: '[\s\-,:!=\[\]()"`/]+|\.(?!\d)|&[lg]t;|(?!\b)(?=[A-Z][a-z])'
 
-# Markdown Extensions
 markdown_extensions:
   - toc:
       permalink: true
-      title: "Table of Contents"
   - tables
   - admonition
   - pymdownx.details
-  - pymdownx.superfences:
-      custom_fences:
-        - name: mermaid
-          class: mermaid
-          format: !!python/name:pymdownx.superfences.fence_code_format
-  - pymdownx.tabbed:
-      alternate_style: true
-  - pymdownx.highlight:
-      anchor_linenums: true
-      line_spans: __span
-      pygments_lang_class: true
+  - pymdownx.superfences
   - pymdownx.inlinehilite
-  - pymdownx.snippets:
-      check_paths: true
-  - pymdownx.arithmatex:
-      generic: true
+  - pymdownx.snippets
+  - pymdownx.arithmatex
   - footnotes
-  - def_list
   - attr_list
   - md_in_html
-  - pymdownx.tasklist:
-      custom_checkbox: true
-  - pymdownx.keys
-  - pymdownx.mark
-  - pymdownx.smartsymbols
-  - pymdownx.caret
-  - pymdownx.tilde
