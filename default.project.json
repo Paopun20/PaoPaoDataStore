@@ -1,7 +1,6 @@
 {
-  "name": "PaoPao's DataStore Module",
+  "name": "PaoPaoDataStore",
   "tree": {
-    "$className": "Folder",
     "$path": "src/PaoPaoDataStore"
   }
 }
