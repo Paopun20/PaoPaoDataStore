@@ -20,35 +20,39 @@ theme:
     - search.highlight
     - search.share
     - search.suggest
+    - toc.integrate
+    - content.code.back-to-top
   palette:
-    - scheme: slate            # True Dark as default
-      primary: "#000000"       # Black
-      accent: "#FFFFFF"        # White text/icons
+    - scheme: slate            # Dark Developer Focus (default)
+      primary: "#1E1E1E"
+      accent: "#61DAFB"
       toggle:
-        icon: material/weather-night
-        name: Switch to Light Mode (not recommended)
+      icon: material/weather-night
+      name: Switch to Light Mode
       background:
-        default: "#000000"
-        paper: "#000000"
+      default: "#1E1E1E"
+      paper: "#1E1E1E"
       default: true
-    - scheme: default          # True Light
+    - scheme: default          # Light Developer Focus
       primary: "#FFFFFF"
-      accent: "#000000"
+      accent: "#1A1A1A"
       toggle:
-        icon: material/brightness-7
-        name: Switch to Dark Mode
+      icon: material/brightness-7
+      name: Switch to Dark Mode
       background:
-        default: "#FFFFFF"
-        paper: "#FFFFFF"
+      default: "#FFFFFF"
+      paper: "#FFFFFF"
 
 nav:
   - Home: index.md
   - tutorial:
-      Setting up: tutorial/setup.md
+      - Setup: tutorial/setup.md
+  - Reference: 
+      - API Reference: reference/api.md
 
 plugins:
   - search:
-      separator: '[\\s\\-,:!=\\[\\]()\"/] +|(?!\\b)(?=[A-Z][a-z])|\\.(?!\\d)|&[lg]t;'
+      separator: '[\\s\\-,:!=\\[\\]()\"/] +|(?!\\b)(?=[A-Z][a-z])|\\.(?!\\d)|&[lg]t;|\\b(?=\\d{1,2}\\.\\d{1,2}\\.\\d{1,2})|[\p{P}\p{S}\p{C}\p{Z}]+'
   - swagger-ui-tag
 
 markdown_extensions:
