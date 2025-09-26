@@ -1,5 +1,9 @@
+--!strict
+--!optimize 2
+--!native
 -- ============================================================================
---  Refactored PPDB – Full Version
+-- PPDB – PaoPao's DataStore Module
+-- A high-performance, caching, migration-friendly DataStore wrapper, and some sh*t code
 -- ============================================================================
 
 local DataStoreService = game:GetService("DataStoreService")
@@ -49,6 +53,19 @@ local function _retryOperation(fn, retries)
     return false,"Retry failed"
 end
 
+function _migrateData(data, migrations)
+    if type(data)~="table" or #migrations==0 then return data end
+    data._version = data._version or 0
+    local version = data._version
+    while version < #migrations do
+        version += 1
+        local fn = migrations[version]
+        local ok,new = pcall(fn, data)
+        if ok and new then data,new._version= new,version else break end
+    end
+    return data
+end
+
 -- ==== Constructor ====
 function PPDB.new(name, opts)
     opts = opts or {}
@@ -77,55 +94,19 @@ end
 
 -- Initialize a key in the DB (loads from cache or DataStore)
 function PPDB:init(key: string, defaultData: {[string]: any}, cb: ((boolean, any) -> ())?)
-    -- Return cached immediately if exists
-    if self._cache[key] then
-        if cb then cb(true, self._cache[key]) end
-        return
-    end
-
-    -- Run beforeInit hook
-    if self._hooks.beforeInit then
-        self._hooks.beforeInit(key, nil)
-    end
-
-    -- Fetch from DataStore
-    local ok, data = pcall(function()
-        return self._store:GetAsync(key)
-    end)
-
-    if not ok then
-        if cb then cb(false, nil) end
-        self:log("ERROR", ("Failed GetAsync for key: %s"):format(key))
-        return
-    end
-
-    -- If no data, use default
-    if not data then
-        data = defaultData
-        local setOk = pcall(function()
-            self._store:SetAsync(key, data)
-        end)
-        if not setOk then
-            self:log("ERROR", "Initial SetAsync failed for key: " .. key)
-        end
-    end
-
-    -- Run migrations if any
-    data = migrateData(data, self._migrations) or data
-
-    -- Store in cache
-    self._cache[key] = data
-
-    -- Run afterInit hook
-    if self._hooks.afterInit then
-        self._hooks.afterInit(key, data)
-    end
-
-    -- Fire event
-    self.OnInit:Fire(key, data)
-
-    -- Callback
-    if cb then cb(true, data) end
+	if self._cache[key] then
+		if cb then cb(true, self._cache[key]) end
+		return self._cache[key]
+	end
+	task.spawn(function()
+		local ok,data = _retryOperation(function() return self._store:GetAsync(key) end)
+		data = (ok and data) or defaultData
+		data = _migrateData(data, self._migrations)
+		self._cache[key] = data
+		self.OnInit:Fire(key, data)
+		if cb then cb(true, data) end
+	end)
+	return nil
 end
 
 -- ==== Locks (Cross-server safe) ====
@@ -152,20 +133,6 @@ function PPDB:_scheduleWriteFlush(key)
             warn("Write failed for key:", key, err)
         end
     end)
-end
-
--- ==== Migrations ====
-local function _migrateData(data, migrations)
-    if type(data)~="table" or #migrations==0 then return data end
-    data._version = data._version or 0
-    local version = data._version
-    while version < #migrations do
-        version += 1
-        local fn = migrations[version]
-        local ok,new = pcall(fn, data)
-        if ok and new then data,new._version= new,version else break end
-    end
-    return data
 end
 
 -- ==== Core API ====
