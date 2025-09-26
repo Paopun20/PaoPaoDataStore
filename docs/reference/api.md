@@ -1,182 +1,601 @@
-# PPDS API Reference
+# PPDB API Reference
 
-This document provides a detailed overview of the PPDS (PaoPao DataStore) API for developers.
+**PPDB (PaoPao's DataStore Module)** - A high-performance, caching, migration-friendly DataStore wrapper with cross-server synchronization.
 
 ---
 
-## **PPDS.new(name, opts)**
+## Overview
 
-Creates a new database instance.
+PPDB provides a robust caching layer over Roblox DataStore with advanced features:
 
-**Parameters:**
+- **Global shared cache** across all instances
+- **Cross-server lock mechanisms** for data safety
+- **Automatic migration system** for data structure updates
+- **Event-driven architecture** with signals
+- **Exponential backoff retry logic**
+- **Discord webhook integration** for monitoring
 
-* `name` *(string)*: Name of the DataStore.
-* `opts` *(table, optional)*:
+---
 
-  * `debug` *(boolean)*: Enable debug logging.
-  * `migrations` *(table of functions)*: Functions to migrate data between versions.
+## Getting Started
 
-**Returns:**
+### Basic Setup
 
-* A new PPDS instance.
+```luau
+local PPDB = require(path.to.PPDB)
 
-```lua
-local db = PPDS.new("PlayerData", { debug = true })
+-- Create a database instance
+local db = PPDB.new("PlayerData", {
+    debug = true,
+    migrations = {} -- Optional migration functions
+})
 ```
 
----
+### Quick Example
 
-## **PPDS:init(key, defaultData, cb)**
-
-Initializes a key in the database.
-
-**Parameters:**
-
-* `key` *(string)*: The key to initialize.
-* `defaultData` *(table)*: Default data for the key.
-* `cb` *(function, optional)*: Callback function `(success, data)` after initialization.
-
-**Returns:**
-
-* The cached data if already loaded, otherwise `nil`.
-
-```lua
-db:init("Player_12345", { coins = 0 }, function(success, data)
-    print(data.coins)
+```luau
+-- Initialize player data
+db:init("Player_12345", { coins = 0, level = 1 }, function(success, data)
+    if success then
+        print("Player loaded:", data.coins, "coins")
+    end
 end)
-```
 
----
-
-## **PPDS:get(key, default)**
-
-Fetches a key from cache or DataStore.
-
-**Parameters:**
-
-* `key` *(string)*
-* `default` *(any)*: Default value if key does not exist.
-
-**Returns:**
-
-* Data from cache or DataStore.
-
-```lua
-local data = db:get("Player_12345", { coins = 0 })
-```
-
----
-
-## **PPDS:set(key, value)**
-
-Sets data for a key and schedules a flush.
-
-**Parameters:**
-
-* `key` *(string)*
-* `value` *(table)*
-
-```lua
-db:set("Player_12345", { coins = 100 })
-```
-
----
-
-## **PPDS:update(key, fn)**
-
-Updates a key using a callback function.
-
-**Parameters:**
-
-* `key` *(string)*
-* `fn` *(function)*: Function `(currentData) -> newData`
-
-```lua
+-- Update data safely
 db:update("Player_12345", function(data)
-    data.coins = (data.coins or 0) + 50
+    data.coins = data.coins + 100
     return data
 end)
 ```
 
 ---
 
-## **PPDS:increment(key, field, amount)**
+## Constructor
 
-Increment a numeric field inside a key.
+### **PPDB.new(name, opts)**
+
+Creates a new database instance with global cache sharing.
 
 **Parameters:**
 
-* `key` *(string)*
-* `field` *(string)*
-* `amount` *(number)*
+- `name` _(string)_: DataStore name - multiple instances with same name share cache
+- `opts` _(table, optional)_:
+  - `debug` _(boolean)_: Enable debug logging
+  - `migrations` _(array of functions)_: Migration functions for data versioning
 
-```lua
-db:increment("Player_12345", "coins", 10)
+**Returns:** PPDB instance with event signals and automatic cleanup
+
+**Features:**
+
+- Automatic `game:BindToClose()` handler for data flushing
+- Global cache shared across all instances with same name
+- Built-in event signals for monitoring operations
+
+```luau
+local playerDB = PPDB.new("PlayerData", {
+    debug = true,
+    migrations = {
+        -- Version 1: Add inventory system
+        function(data)
+            if not data.inventory then
+                data.inventory = {}
+                data._version = 1
+            end
+            return data
+        end,
+        -- Version 2: Restructure stats
+        function(data)
+            if data.kills and not data.stats then
+                data.stats = { kills = data.kills }
+                data.kills = nil
+                data._version = 2
+            end
+            return data
+        end
+    }
+})
 ```
 
 ---
 
-## **PPDS:cleanCache()**
+## Core Data Operations
 
-Removes expired entries from the cache.
+### Loading and Initialization
 
-```lua
-db:cleanCache()
-```
+#### **PPDB:init(key, defaultData, callback)**
 
----
+Asynchronously initializes a key with default data if not exists.
 
-## **PPDS:export()**
+**Parameters:**
 
-Exports the current cache as a Lua table.
+- `key` _(string)_: The data key to initialize
+- `defaultData` _(table)_: Default data structure
+- `callback` _(function, optional)_: `(success: boolean, data: table) -> ()`
 
 **Returns:**
 
-* A deep copy of cached data.
+- Cached data immediately if available
+- `nil` if loading asynchronously
 
-```lua
-local snapshot = db:export()
+**Behavior:**
+
+- Returns cached data instantly if already loaded
+- Spawns async task for DataStore loading
+- Applies migrations automatically
+- Fires `OnInit` event
+
+```luau
+-- Immediate return if cached
+local cachedData = db:init("Player_12345", defaultPlayerData)
+if cachedData then
+    print("Data was already cached")
+end
+
+-- Async callback for new loads
+db:init("Player_67890", defaultPlayerData, function(success, data)
+    if success then
+        print("Player loaded with", data.coins, "coins")
+        -- Safe to use data here
+    else
+        warn("Failed to load player data")
+    end
+end)
 ```
 
----
+#### **PPDB:get(key, default)**
 
-## **PPDS:import(tbl, overwrite)**
-
-Imports data into the cache.
+Synchronously fetches data from cache or DataStore with fallback.
 
 **Parameters:**
 
-* `tbl` *(table)*: Data to import.
-* `overwrite` *(boolean)*: Whether to overwrite existing keys.
+- `key` _(string)_: Data key to retrieve
+- `default` _(any)_: Fallback value if key doesn't exist or load fails
 
-```lua
-db:import(snapshot, true)
+**Returns:** Data from cache/DataStore or default value
+
+**Behavior:**
+
+- Instant return if data is cached
+- Synchronous DataStore call if not cached (may yield)
+- Applies migrations before returning
+- Caches result for future calls
+
+```luau
+-- Get with fallback
+local playerData = db:get("Player_12345", { coins = 0, level = 1 })
+
+-- Always returns something
+local config = db:get("ServerConfig", {
+    maxPlayers = 50,
+    difficulty = "normal"
+})
+```
+
+### Writing Data
+
+#### **PPDB:set(key, value)**
+
+Immediately updates cache and schedules async DataStore write.
+
+**Parameters:**
+
+- `key` _(string)_: Data key to update
+- `value` _(table)_: New data to store
+
+**Behavior:**
+
+- Updates cache immediately (instant)
+- Schedules DataStore write after 1-second delay
+- Uses cross-server locking for safety
+- Fires `OnSave` event on successful write
+
+```luau
+-- Immediate cache update, async save
+db:set("Player_12345", {
+    coins = 500,
+    level = 5,
+    inventory = {"sword", "potion"},
+    lastLogin = os.time()
+})
+```
+
+#### **PPDB:update(key, fn)**
+
+Safely updates data using a transformation function.
+
+**Parameters:**
+
+- `key` _(string)_: Data key to update
+- `fn` _(function)_: `(currentData: table) -> newData: table`
+
+**Behavior:**
+
+- Gets current data (loads if needed)
+- Applies transformation function
+- Sets result if function returns non-nil
+
+```luau
+-- Safe concurrent updates
+db:update("Player_12345", function(data)
+    -- This is safe from race conditions
+    data.coins = data.coins + 100
+    data.stats.gamesPlayed = (data.stats.gamesPlayed or 0) + 1
+    data.lastPlayed = os.time()
+    return data
+end)
+
+-- Conditional updates
+db:update("Player_12345", function(data)
+    if data.coins >= 100 then
+        data.coins = data.coins - 100
+        table.insert(data.inventory, "premium_item")
+        return data
+    end
+    -- Return nil to cancel update
+    return nil
+end)
+```
+
+#### **PPDB:increment(key, field, amount)**
+
+Atomically increments a numeric field within a data structure.
+
+**Parameters:**
+
+- `key` _(string)_: Data key containing the field
+- `field` _(string)_: Numeric field name to increment
+- `amount` _(number)_: Amount to add (negative for subtraction)
+
+```luau
+-- Add currency
+db:increment("Player_12345", "coins", 50)
+
+-- Subtract health
+db:increment("Player_12345", "health", -10)
+
+-- Track statistics
+db:increment("ServerStats", "totalLogins", 1)
 ```
 
 ---
 
-## **PPDS:flushWrites()**
+## Session Management
 
-Flushes all cached writes to the DataStore immediately.
+### **PPDB:leave(key)**
 
-```lua
-db:flushWrites()
+Immediately saves data and removes from cache for cleanup.
+
+**Use Case:** Call when players leave to ensure data persistence and free memory.
+
+**Parameters:**
+
+- `key` _(string)_: Data key to save and remove
+
+**Behavior:**
+
+- Forces immediate save to DataStore
+- Removes from cache to free memory
+- Fires `OnDelete` event
+
+```luau
+-- Proper player cleanup
+game.Players.PlayerRemoving:Connect(function(player)
+    local key = "Player_" .. player.UserId
+    db:leave(key)
+end)
 ```
 
 ---
 
-## **PPDS:setWebhook(url)**
+## Advanced Features
 
-Sets a Discord webhook URL for logging (optional).
+### Cross-Server Data Safety
 
-```lua
-db:setWebhook("YOUR_WEBHOOK_URL")
+PPDB implements cross-server locks using MemoryStoreService to prevent data corruption:
+
+```luau
+-- Automatic locking (internal)
+function PPDB:_acquireLock(key)
+    local lockKey = self._name .. ":" .. key
+    -- Attempts to acquire distributed lock
+    -- Prevents simultaneous writes across servers
+end
 ```
 
-## **PPDS:sendToDiscord(enabled)**
+**Benefits:**
 
-Enables or disables sending logs to Discord.
+- Prevents data loss from concurrent writes
+- Ensures data consistency across servers
+- Automatic retry with exponential backoff
 
-```lua
+### Migration System
+
+Handle data structure changes gracefully:
+
+```luau
+local migrations = {
+    [1] = function(data)
+        -- Version 1: Add new fields
+        data.newField = "defaultValue"
+        return data
+    end,
+    [2] = function(data)
+        -- Version 2: Restructure existing data
+        if data.oldStructure then
+            data.newStructure = transformOldStructure(data.oldStructure)
+            data.oldStructure = nil
+        end
+        return data
+    end
+}
+
+local db = PPDB.new("PlayerData", { migrations = migrations })
+```
+
+**Migration Features:**
+
+- Automatic version tracking (`data._version`)
+- Sequential migration application
+- Error-safe migration (fails gracefully)
+- Applied on every data load
+
+---
+
+## Cache Management
+
+### **PPDB:cleanCache()**
+
+Removes expired entries from memory cache.
+
+**Behavior:**
+
+- Checks each cached entry for expiration timestamp
+- Removes entries older than 1 hour (3600 seconds)
+- Frees memory for active data
+
+```luau
+-- Periodic cache cleanup
+task.spawn(function()
+    while true do
+        task.wait(300) -- Every 5 minutes
+        db:cleanCache()
+    end
+end)
+```
+
+### **PPDB:flushWrites()**
+
+Forces immediate save of all cached data to DataStore.
+
+**Use Case:** Critical save points, server shutdown, debugging
+
+```luau
+-- Emergency save all data
+game:BindToClose(function()
+    db:flushWrites()
+    task.wait(3) -- Allow time for saves to complete
+end)
+```
+
+---
+
+## Event System
+
+PPDB provides event signals for monitoring and integration:
+
+### Available Events
+
+#### **OnInit**
+
+Fired when data is loaded/initialized.
+
+```luau
+db.OnInit:Connect(function(key, data)
+    print("Data loaded for", key)
+    -- Update UI, trigger game logic, etc.
+end)
+```
+
+#### **OnSave**
+
+Fired when data is successfully saved to DataStore.
+
+```luau
+db.OnSave:Connect(function(key, data)
+    print("Data saved for", key)
+    -- Log successful saves, update metrics
+end)
+```
+
+#### **OnDelete**
+
+Fired when data is removed from cache.
+
+```luau
+db.OnDelete:Connect(function(key)
+    print("Cache cleared for", key)
+    -- Cleanup related resources
+end)
+```
+
+#### **OnInvalidate**
+
+Fired when data should be refreshed (cross-server sync).
+
+```luau
+db.OnInvalidate:Connect(function(key)
+    print("Data invalidated for", key)
+    -- Refresh UI, reload data
+end)
+```
+
+---
+
+## Development Tools
+
+### Data Export/Import
+
+#### **PPDB:export()**
+
+Creates a deep copy snapshot of current cache.
+
+**Returns:** Complete cache data as Lua table
+
+**Use Cases:**
+
+- Creating development snapshots
+- Debugging data states
+- Backup creation
+
+```luau
+local snapshot = db:export()
+print("Cached entries:", #snapshot)
+
+-- Save snapshot for later use
+local backupData = db:export()
+```
+
+#### **PPDB:import(tbl, overwrite)**
+
+Loads data from table into cache.
+
+**Parameters:**
+
+- `tbl` _(table)_: Data to import
+- `overwrite` _(boolean)_: Replace existing cache entries
+
+```luau
+-- Load test data for development
+local testData = {
+    ["TestPlayer1"] = { coins = 1000, level = 10 },
+    ["TestPlayer2"] = { coins = 500, level = 5 }
+}
+db:import(testData, false) -- Don't overwrite existing
+
+-- Restore from backup
+db:import(backupSnapshot, true) -- Overwrite existing data
+```
+
+---
+
+## Discord Integration
+
+### **PPDB:setWebhook(url)**
+
+Configures Discord webhook URL for logging.
+
+```luau
+db:setWebhook("https://discord.com/api/webhooks/your-webhook-url")
+```
+
+### **PPDB:sendToDiscord(enabled)**
+
+Enables/disables Discord logging.
+
+```luau
+-- Enable for production monitoring
 db:sendToDiscord(true)
+
+-- Disable for development
+db:sendToDiscord(false)
 ```
+
+---
+
+## Best Practices
+
+### Error Handling and Resilience
+
+```luau
+-- Always handle init callbacks
+db:init("Player_" .. player.UserId, defaultData, function(success, data)
+    if not success then
+        -- Handle failure gracefully
+        warn("Failed to load player data, using defaults")
+        player:SetAttribute("DataLoaded", false)
+        return
+    end
+
+    player:SetAttribute("DataLoaded", true)
+    -- Proceed with game logic
+end)
+```
+
+### Safe Concurrent Operations
+
+```luau
+-- Use update() for race-condition safety
+db:update("Player_12345", function(data)
+    -- This entire block is atomic
+    if data.coins >= cost then
+        data.coins = data.coins - cost
+        table.insert(data.inventory, item)
+        return data -- Apply changes
+    end
+    return nil -- Cancel if insufficient funds
+end)
+```
+
+### Memory Management
+
+```luau
+-- Proper cleanup on player leave
+game.Players.PlayerRemoving:Connect(function(player)
+    db:leave("Player_" .. player.UserId)
+end)
+
+-- Periodic cache maintenance
+task.spawn(function()
+    while true do
+        task.wait(600) -- Every 10 minutes
+        db:cleanCache()
+    end
+end)
+```
+
+### Production Monitoring
+
+```luau
+-- Set up monitoring
+db:setWebhook(DISCORD_WEBHOOK_URL)
+db:sendToDiscord(true)
+
+-- Track important events
+db.OnSave:Connect(function(key, data)
+    -- Log successful saves for monitoring
+    analytics:trackEvent("DataSaved", { key = key })
+end)
+
+db.OnInit:Connect(function(key, data)
+    -- Track data loads
+    analytics:trackEvent("DataLoaded", { key = key })
+end)
+```
+
+---
+
+## Technical Implementation Notes
+
+### Global Cache Architecture
+
+- Cache is shared across all PPDB instances with the same name
+- Enables consistent data access patterns
+- Reduces memory usage in multi-instance scenarios
+
+### Retry Logic
+
+- Exponential backoff with jitter (0.5s base, up to ~4s)
+- Default 3 retries for most operations
+- Prevents thundering herd problems
+
+### Cross-Server Synchronization
+
+- Uses MemoryStoreService queues for coordination
+- Implements distributed locking for write safety
+- Broadcasts invalidation events across servers
+
+### Performance Optimizations
+
+- JSON caching prevents redundant serialization
+- Delayed write batching reduces DataStore calls
+- Automatic cache expiration manages memory usage

@@ -3,9 +3,8 @@
 --!native
 -- ============================================================================
 -- PPDB – PaoPao's DataStore Module
--- A high-performance, caching, migration-friendly DataStore wrapper, and some sh*t code
+-- High-performance, caching, migration-friendly DataStore wrapper
 -- ============================================================================
-
 local DataStoreService = game:GetService("DataStoreService")
 local MemoryStoreService = game:GetService("MemoryStoreService")
 local HttpService = game:GetService("HttpService")
@@ -17,6 +16,7 @@ PPDB.__index = PPDB
 local GLOBAL_CACHE = {}
 local MEMORY_QUEUE = MemoryStoreService:GetQueue("PPDB_GlobalInvalidation")
 local JSON_CACHE = {}
+local WRITE_QUEUE = {}
 
 -- ==== Signals ====
 local Signal = {}
@@ -44,7 +44,7 @@ function Signal:Fire(...)
 end
 
 -- ==== Helpers ====
-function _serialize(data)
+local function _serialize(data)
 	local ok, json = pcall(HttpService.JSONEncode, HttpService, data)
 	if not ok then
 		return "{}"
@@ -53,31 +53,28 @@ function _serialize(data)
 	return JSON_CACHE[json]
 end
 
-function _deserialize(json)
-	if not json then
-		return nil
-	end
+local function _deserialize(json)
+	if not json then return nil end
 	local ok, data = pcall(HttpService.JSONDecode, HttpService, json)
 	return ok and data or nil
 end
 
-function _retryOperation(fn, retries)
+local function _retryOperation(fn, retries, debug)
 	retries = retries or 3
 	local base = 0.5
 	for i = 1, retries do
 		local ok, res = pcall(fn)
-		if ok then
-			return true, res
+		if ok then return true, res end
+		if debug then
+			warn(string.format("Retry %d failed: %s", i, tostring(res)))
 		end
 		task.wait(base * 2 ^ (i - 1) * (0.9 + math.random() * 0.2))
 	end
 	return false, "Retry failed"
 end
 
-function _migrateData(data, migrations)
-	if type(data) ~= "table" or #migrations == 0 then
-		return data
-	end
+local function _migrateData(data: { [string]: any }, migrations: { [any]: ({ [string]: any }) -> ({ [string]: any | nil }) })
+	if type(data) ~= "table" or #migrations == 0 then return data end
 	data._version = data._version or 0
 	local version = data._version
 	while version < #migrations do
@@ -85,7 +82,8 @@ function _migrateData(data, migrations)
 		local fn = migrations[version]
 		local ok, new = pcall(fn, data)
 		if ok and new then
-			data, new._version = new, version
+			data = new
+			data._version = version
 		else
 			break
 		end
@@ -94,7 +92,7 @@ function _migrateData(data, migrations)
 end
 
 -- ==== Constructor ====
-function PPDB.new(name, opts)
+function PPDB.new(name: string, opts: { [string]: any }?)
 	opts = opts or {}
 	local self = setmetatable({}, PPDB)
 	self._name = name
@@ -102,10 +100,9 @@ function PPDB.new(name, opts)
 	self._cache = GLOBAL_CACHE[name] or {}
 	GLOBAL_CACHE[name] = self._cache
 	self._migrations = opts.migrations or {}
-	self._writeCount = 0
+	self._debug = opts.debug or false
 	self.Webhook = ""
 	self.enabledSTD = false
-	self._debug = opts.debug or false
 
 	-- Signals
 	self.OnInit = Signal.new()
@@ -121,103 +118,140 @@ function PPDB.new(name, opts)
 	return self
 end
 
--- Initialize a key in the DB (loads from cache or DataStore)
+-- ==== Core Methods ====
 function PPDB:init(key: string, defaultData: { [string]: any }, cb: ((boolean, any) -> ())?)
 	if self._cache[key] then
-		if cb then
-			cb(true, self._cache[key])
-		end
+		if cb then cb(true, self._cache[key]) end
 		return self._cache[key]
 	end
 	task.spawn(function()
 		local ok, data = _retryOperation(function()
 			return self._store:GetAsync(key)
-		end, 3)
+		end, 3, self._debug)
+		data = (ok and data) or defaultData
 		data = _migrateData(data, self._migrations)
+		data._t = tick()
 		self._cache[key] = data
 		self.OnInit:Fire(key, data)
-		if cb then
-			cb(true, data)
-		end
+		if cb then cb(true, data) end
 	end)
 	return nil
 end
 
--- ==== Locks (Cross-server safe) ====
-function PPDB:_acquireLock(key)
-	local lockKey = self._name .. ":" .. key
-	local ok, _ = _retryOperation(function()
-		return MEMORY_QUEUE:PushBack(_serialize({ lock = lockKey }), 10)
-	end, 1)
-	return ok
-end
-function PPDB:_releaseLock(key) end -- optional cleanup
+function PPDB:get(key: string, default: any?, ttl: number?)
+	local cached = self._cache[key]
+	if cached and ttl and cached._t and tick() - cached._t > ttl then cached = nil end
+	if cached then return cached end
 
--- ==== Write Flush ====
-function PPDB:_scheduleWriteFlush(key)
-	task.delay(1, function()
-		local data = self._cache[key]
-		if not data then
-			return
-		end
-		if not self:_acquireLock(key) then
-			return
-		end
-
-		local ok, err = _retryOperation(function()
-			self._store:SetAsync(key, data)
-		end)
-		self:_releaseLock(key)
-		if ok then
-			MEMORY_QUEUE:PushBack(_serialize({ name = self._name, key = key }), 60)
-			self.OnSave:Fire(key, data)
-		else
-			warn("Write failed for key:", key, err)
-		end
-	end)
-end
-
--- ==== Core API ====
-function PPDB:get(key, default)
-	if self._cache[key] then
-		return self._cache[key]
-	end
 	local ok, data = _retryOperation(function()
 		return self._store:GetAsync(key)
-	end)
+	end, 3, self._debug)
 	data = (ok and data) or default
 	data = _migrateData(data, self._migrations)
+	data._t = tick()
 	self._cache[key] = data
 	self.OnInit:Fire(key, data)
 	return data
 end
 
-function PPDB:set(key, value)
+function PPDB:set(key: string, value)
+	value._t = tick()
 	self._cache[key] = value
 	self:_scheduleWriteFlush(key)
 end
 
-function PPDB:update(key, fn)
+function PPDB:update(key: string, fn)
 	local cur = self:get(key, {})
 	local new = fn(cur)
 	if new then
+		new._t = tick()
 		self:set(key, new)
 	end
 end
 
-function PPDB:increment(key, field, amount)
+function PPDB:increment(key: string, field: string, amount: number)
 	self:update(key, function(d)
 		d[field] = (d[field] or 0) + amount
 		return d
 	end)
 end
 
--- ==== Cache Maintenance ====
-function PPDB:cleanCache()
+function PPDB:leave(key: string)
+	self:update(key, function(d) return d end)
+	self:flushWrites()
+	self._cache[key] = nil
+	self.OnDelete:Fire(key)
+end
+
+function PPDB:cleanCache(ttl: number?)
+	ttl = ttl or 3600
 	for k, v in pairs(self._cache) do
-		if v._t and tick() - v._t > 3600 then
+		if v._t and tick() - v._t > ttl then
 			self._cache[k] = nil
 		end
+	end
+end
+
+-- ==== Locks (Cross-server safe) ====
+function PPDB:_acquireLock(key: string)
+	local lockKey = self._name .. ":" .. key .. ":" .. HttpService:GenerateGUID(false)
+	local ok, _ = _retryOperation(function()
+		return MEMORY_QUEUE:PushBack(_serialize({ lock = lockKey }), 10)
+	end, 3, self._debug)
+	return ok, lockKey
+end
+
+function PPDB:_releaseLock(lockKey: string)
+	local ok, _ = _retryOperation(function()
+		local item = MEMORY_QUEUE:PopFront()
+		if item then
+			local data = _deserialize(item)
+			if data and data.lock == lockKey then
+				return true
+			else
+				MEMORY_QUEUE:PushBack(item, 10)
+			end
+		end
+		return false
+	end, 3, self._debug)
+	return ok
+end
+
+-- ==== Write Flush ====
+function PPDB:_scheduleWriteFlush(key: string)
+	if WRITE_QUEUE[key] then return end
+	WRITE_QUEUE[key] = true
+	task.delay(1, function()
+		local data = self._cache[key]
+		if not data then
+			WRITE_QUEUE[key] = nil
+			return
+		end
+		local ok, lockKey = self:_acquireLock(key)
+		if not ok then
+			WRITE_QUEUE[key] = nil
+			return
+		end
+
+		local success, err = _retryOperation(function()
+			self._store:SetAsync(key, data)
+		end, 3, self._debug)
+
+		self:_releaseLock(lockKey)
+		if success then
+			MEMORY_QUEUE:PushBack(_serialize({ name = self._name, key = key }), 60)
+			self.OnSave:Fire(key, data)
+			self:_logToDiscord(string.format("Saved key: %s", key))
+		else
+			warn("Write failed for key:", key, err)
+		end
+		WRITE_QUEUE[key] = nil
+	end)
+end
+
+function PPDB:flushWrites()
+	for key, _ in pairs(self._cache) do
+		self:_scheduleWriteFlush(key)
 	end
 end
 
@@ -225,7 +259,7 @@ end
 function PPDB:export()
 	return _deserialize(_serialize(self._cache))
 end
-function PPDB:import(tbl, overwrite)
+function PPDB:import(tbl: { [string]: any }, overwrite: boolean?)
 	for k, v in pairs(tbl) do
 		if overwrite or self._cache[k] == nil then
 			self:set(k, v)
@@ -233,19 +267,29 @@ function PPDB:import(tbl, overwrite)
 	end
 end
 
--- ==== Flush all queued writes ====
-function PPDB:flushWrites()
-	for key, _ in pairs(self._cache) do
-		self:_scheduleWriteFlush(key)
-	end
-end
-
--- ==== Logging / Discord ====
-function PPDB:setWebhook(url)
+-- ==== Discord Logging ====
+function PPDB:setWebhook(url: string)
 	self.Webhook = url
 end
-function PPDB:sendToDiscord(enabled)
+
+function PPDB:sendToDiscord(enabled: boolean)
 	self.enabledSTD = enabled
+end
+
+function PPDB:_logToDiscord(message: string)
+	if not self.enabledSTD or self.Webhook == "" then return end
+	task.spawn(function()
+		local ok = pcall(function()
+			HttpService:PostAsync(
+				self.Webhook,
+				HttpService:JSONEncode({ content = message }),
+				Enum.HttpContentType.ApplicationJson
+			)
+		end)
+		if not ok and self._debug then
+			warn("Discord log failed")
+		end
+	end)
 end
 
 return PPDB

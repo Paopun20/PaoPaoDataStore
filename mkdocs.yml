@@ -11,8 +11,15 @@ theme:
     logo: material/database
   favicon: images/favicon.png
   features:
+    # code block enhancements
     - content.code.copy
     - content.code.annotate
+    - content.code.select
+    - content.code.highlight
+    - content.code.line-numbers
+    - navigation.expand
+    - navigation.indexes
+
     - content.tabs.link
     - navigation.tabs
     - navigation.sections
@@ -58,6 +65,15 @@ plugins:
 markdown_extensions:
   - toc:
       permalink: true
+
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+
   - tables
   - footnotes
   - attr_list
