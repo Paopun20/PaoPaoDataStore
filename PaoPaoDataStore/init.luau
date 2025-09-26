@@ -75,6 +75,59 @@ function PPDB.new(name, opts)
     return self
 end
 
+-- Initialize a key in the DB (loads from cache or DataStore)
+function PPDB:init(key: string, defaultData: {[string]: any}, cb: ((boolean, any) -> ())?)
+    -- Return cached immediately if exists
+    if self._cache[key] then
+        if cb then cb(true, self._cache[key]) end
+        return
+    end
+
+    -- Run beforeInit hook
+    if self._hooks.beforeInit then
+        self._hooks.beforeInit(key, nil)
+    end
+
+    -- Fetch from DataStore
+    local ok, data = pcall(function()
+        return self._store:GetAsync(key)
+    end)
+
+    if not ok then
+        if cb then cb(false, nil) end
+        self:log("ERROR", ("Failed GetAsync for key: %s"):format(key))
+        return
+    end
+
+    -- If no data, use default
+    if not data then
+        data = defaultData
+        local setOk = pcall(function()
+            self._store:SetAsync(key, data)
+        end)
+        if not setOk then
+            self:log("ERROR", "Initial SetAsync failed for key: " .. key)
+        end
+    end
+
+    -- Run migrations if any
+    data = migrateData(data, self._migrations) or data
+
+    -- Store in cache
+    self._cache[key] = data
+
+    -- Run afterInit hook
+    if self._hooks.afterInit then
+        self._hooks.afterInit(key, data)
+    end
+
+    -- Fire event
+    self.OnInit:Fire(key, data)
+
+    -- Callback
+    if cb then cb(true, data) end
+end
+
 -- ==== Locks (Cross-server safe) ====
 function PPDB:_acquireLock(key)
     local lockKey = self._name..":"..key
