@@ -3,6 +3,9 @@ name: Build RBXM
 on:
   push:
     branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch: {}
 
 jobs:
   build:
@@ -12,13 +15,11 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Set up Rojo
-        uses: CompeyDev/setup-rojo@v1
+      - name: Build with Rojo
+        uses: CompeyDev/rojo-build-action@v0.1.5
         with:
-          version: 7.4.1
-
-      - name: Build RBXM
-        run: rojo build -o PaoPaoDataStore.rbxm
+          output: PaoPaoDataStore
+          type: rbxm
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
