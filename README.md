@@ -1,4 +1,4 @@
-# PPDS (PaoPao DataStore)
+# PPDS (PaoPao's DataStore module)
 
 A fast, server-side Roblox DataStore wrapper with caching, cross-server invalidation, migrations, and lifecycle hooks.
 
