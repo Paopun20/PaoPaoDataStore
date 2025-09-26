@@ -1,0 +1,27 @@
+name: Build RBXM
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Rojo
+        uses: CompeyDev/setup-rojo@v1
+        with:
+          version: 7.4.1
+
+      - name: Build RBXM
+        run: rojo build -o PaoPaoDataStore.rbxm
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: PaoPaoDataStore
+          path: PaoPaoDataStore.rbxm
