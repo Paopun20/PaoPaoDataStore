@@ -12,7 +12,7 @@ jobs:
 
     steps:
       - name: Checkout files
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Build
         uses: CompeyDev/rojo-build-action@0.1.5
@@ -25,11 +25,3 @@ jobs:
         with:
           name: PaoPaoDataStore
           path: PaoPaoDataStore.rbxm
-
-      - name: Commit and push if there are changes
-        run: |-
-          git diff
-          git config --global user.email "hi@devcomp.xyz"
-          git config --global user.name "BuildBot"
-          git diff --quiet || (git add -u && git commit -m "chore(deploy): build rojo project")
-          git push               
