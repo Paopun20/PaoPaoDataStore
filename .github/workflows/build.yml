@@ -14,11 +14,26 @@ jobs:
       - name: Checkout files
         uses: actions/checkout@v4
 
+      - name: Show current directory
+        run: pwd
+
+      - name: List all files recursively
+        run: ls -alR
+
+      - name: Show Rojo version
+        run: ./rojo --version || echo "Rojo not installed yet"
+
       - name: Build
         uses: CompeyDev/rojo-build-action@0.1.5
         with:
-          output: PaoPaoDataStore.rbxm
+          output: PaoPaoDataStore
           type: rbxm
+
+      - name: List files after build
+        run: ls -alR
+
+      - name: Check the built RBXM file
+        run: file PaoPaoDataStore.rbxm || echo "RBXM file not found"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
