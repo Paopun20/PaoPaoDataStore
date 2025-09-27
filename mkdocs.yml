@@ -1,15 +1,23 @@
-site_name: PPDS Documentation
-site_description: "Documentation for PaoPao's DataStore Modules"
+site_name: "PaoPao's DataStore Module"
+site_description: "High-performance, caching, migration-friendly DataStore wrapper for Roblox games."
 site_author: "PaoPaoDev (Paopun20)"
 site_url: https://paopun20.github.io/PaoPaoDataStore/
 repo_url: https://github.com/Paopun20/PaoPaoDataStore
 repo_name: "PaoPao's DataStore Module"
 
+# Copyright
+copyright: "Licensed under the Apache License 2.0"
+
 theme:
   name: material
   icon:
     logo: material/database
-  favicon: images/favicon.png
+  favicon:
+    images/favicon.png
+  font:
+    text: Roboto
+    code: Roboto Mono
+
   features:
     # code block enhancements
     - content.code.copy
@@ -19,7 +27,6 @@ theme:
     - content.code.line-numbers
     - navigation.expand
     - navigation.indexes
-
     - content.tabs.link
     - navigation.tabs
     - navigation.sections
@@ -29,26 +36,26 @@ theme:
     - search.suggest
     - toc.integrate
     - content.code.back-to-top
+
   palette:
-    - scheme: slate            # Dark Developer Focus (default)
-      primary: "#1E1E1E"
-      accent: "#61DAFB"
+    - media: "(prefers-color-scheme)"
       toggle:
-      icon: material/weather-night
-      name: Switch to Light Mode
-      background:
-      default: "#1E1E1E"
-      paper: "#1E1E1E"
-      default: true
-    - scheme: default          # Light Developer Focus
-      primary: "#FFFFFF"
-      accent: "#1A1A1A"
+        icon: material/link
+        name: Switch to light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
       toggle:
-      icon: material/brightness-7
-      name: Switch to Dark Mode
-      background:
-      default: "#FFFFFF"
-      paper: "#FFFFFF"
+        icon: material/toggle-switch
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: black
+      accent: indigo
+      toggle:
+        icon: material/toggle-switch-off
+        name: Switch to system preference
 
 nav:
   - Home: index.md
@@ -59,47 +66,62 @@ nav:
 
 plugins:
   - search:
-      separator: '[\\s\\-,:!=\\[\\]()\"/] +|(?!\\b)(?=[A-Z][a-z])|\\.(?!\\d)|&[lg]t;|\\b(?=\\d{1,2}\\.\\d{1,2}\\.\\d{1,2})|[\p{P}\p{S}\p{C}\p{Z}]+'
-  - swagger-ui-tag
+      separator: '[\s\u200b\-_,:!=\[\]()"`/]+|\.(?!\d)|&[lg]t;|(?!\b)(?=[A-Z][a-z])'
+
+# Additional configuration
+extra:
+  status:
+    new: Recently added
+    deprecated: Deprecated
+  analytics:
+    provider: google
+    property: !ENV GOOGLE_ANALYTICS_KEY
 
 markdown_extensions:
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
   - toc:
       permalink: true
-
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
   - pymdownx.highlight:
       anchor_linenums: true
       line_spans: __span
       pygments_lang_class: true
   - pymdownx.inlinehilite
-  - pymdownx.snippets
-  - pymdownx.superfences
-
-  - tables
-  - footnotes
-  - attr_list
-  - def_list
-  - abbr
-  - admonition
-  - codehilite
-  - meta
-  - sane_lists
-  - md_in_html
-  - nl2br
-  - smarty
-  - pymdownx.escapeall
-  - pymdownx.arithmatex
-  - pymdownx.betterem
-  - pymdownx.caret
-  - pymdownx.critic
-  - pymdownx.details
-  - pymdownx.inlinehilite
-  - pymdownx.magiclink
+  - pymdownx.keys
+  - pymdownx.magiclink:
+      normalize_issue_symbols: true
+      repo_url_shorthand: true
+      user: squidfunk
+      repo: mkdocs-material
   - pymdownx.mark
   - pymdownx.smartsymbols
-  - pymdownx.snippets
-  - pymdownx.superfences
-  - pymdownx.tasklist
+  - pymdownx.snippets:
+      auto_append:
+        - includes/mkdocs.md
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+      combine_header_slug: true
+      slugify: !!python/object/apply:pymdownx.slugs.slugify
+        kwds:
+          case: lower
+  - pymdownx.tasklist:
+      custom_checkbox: true
   - pymdownx.tilde
-  - pymdownx.highlight
-  - pymdownx.emoji
-  - pymdownx.tabbed

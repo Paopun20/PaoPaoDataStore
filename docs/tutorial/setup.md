@@ -1,32 +1,32 @@
-# PPDB Setup Guide
+# PPDS Setup Guide
 
-PPDB (PaoPao's DataStore Module) is a **ModuleScript** for Roblox that provides a high-performance, caching-friendly, migration-ready wrapper for DataStores with cross-server synchronization.
+PPDS (PaoPao's DataStore Module) is a **ModuleScript** for Roblox that provides a high-performance, caching-friendly, migration-ready wrapper for DataStores with cross-server synchronization.
 It **must be used server-side** (e.g., inside `ServerScriptService`).
 
 ---
 
-## Step 1: Get PPDB
+## Step 1: Get PPDS
 
 ### Option 1: Roblox Library
-* Get the PPDB library model from the [Roblox Asset Library](https://www.roblox.com/library/95562270661505/).
+* Get the PPDS library model from the [Roblox Asset Library](https://www.roblox.com/library/95562270661505/).
 
 ### Option 2: GitHub
 * Clone or download from the [PaoPaoDataStore repository](https://github.com/Paopun20/PaoPaoDataStore).
 
 ### Option 3: Direct Script
-* Copy the PPDB source code into a new ModuleScript in Studio.
+* Copy the PPDS source code into a new ModuleScript in Studio.
 
 ---
 
-## Step 2: Install PPDB
+## Step 2: Install PPDS
 
 1. **Place the Module**: Move the `PaoPaoDataStore` ModuleScript to `ServerScriptService` (or your preferred server-side location).
-2. **Rename (Optional)**: Rename it to `PPDB` for clarity.
+2. **Rename (Optional)**: Rename it to `PPDS` for clarity.
 3. **Verify Location**: Ensure it's accessible from your server scripts.
 
 ```
 ServerScriptService/
-├── PPDB (ModuleScript)
+├── PPDS (ModuleScript)
 ├── PlayerManager (Server Script)
 └── GameLogic (Server Script)
 ```
@@ -38,11 +38,11 @@ ServerScriptService/
 ### Simple Setup
 
 ```luau
--- Require PPDB in a server script
-local PPDB = require(game.ServerScriptService.PPDB)
+-- Require PPDS in a server script
+local PPDS = require(game.ServerScriptService.PPDS)
 
 -- Create a new database instance
-local playerDB = PPDB.new("PlayerData", {
+local playerDB = PPDS.new("PlayerData", {
     debug = true -- Enable debug logging during development
 })
 
@@ -135,7 +135,7 @@ local migrations = {
     end
 }
 
-local playerDB = PPDB.new("PlayerData", {
+local playerDB = PPDS.new("PlayerData", {
     debug = false, -- Disable in production
     migrations = migrations
 })
@@ -203,7 +203,7 @@ end
 
 ```luau
 -- Create a separate database for global stats
-local leaderboardDB = PPDB.new("GlobalStats", { debug = false })
+local leaderboardDB = PPDS.new("GlobalStats", { debug = false })
 
 -- Update global leaderboard
 local function updateLeaderboard(player, score)
@@ -276,7 +276,7 @@ end)
 -- Enable debug mode during development
 local IS_DEVELOPMENT = game.PlaceId ~= YOUR_PRODUCTION_PLACE_ID
 
-local playerDB = PPDB.new("PlayerData", {
+local playerDB = PPDS.new("PlayerData", {
     debug = IS_DEVELOPMENT,
     migrations = migrations
 })
@@ -373,7 +373,7 @@ end)
 ## Common Issues and Solutions
 
 ### Issue: "DataStore request was throttled"
-**Solution**: PPDB handles retries automatically, but avoid calling operations too frequently.
+**Solution**: PPDS handles retries automatically, but avoid calling operations too frequently.
 
 ### Issue: Data not saving on server shutdown
 **Solution**: Ensure `game:BindToClose()` calls `flushWrites()` with adequate wait time.
@@ -382,7 +382,7 @@ end)
 **Solution**: Call `cleanCache()` periodically and use `leave()` when players disconnect.
 
 ### Issue: Data corruption across servers
-**Solution**: PPDB's cross-server locking handles this automatically.
+**Solution**: PPDS's cross-server locking handles this automatically.
 
 ---
 
@@ -394,4 +394,4 @@ end)
 4. **Scale Gradually**: Add more complex features as needed
 5. **Test Thoroughly**: Always test with multiple players and servers
 
-For detailed API documentation, see the [PPDB API Reference](`./../../reference/api`).
+For detailed API documentation, see the [PPDS API Reference](`./../../reference/api`).

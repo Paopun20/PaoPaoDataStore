@@ -1,14 +1,14 @@
-# PaoPao's DataStore Module (PPDB)
+# PaoPao's DataStore Module (PPDS)
 
-PPDB is a high-performance Roblox DataStore wrapper that simplifies the management of persistent data with advanced caching, cross-server synchronization, and migration capabilities. It is designed to be robust, efficient, and developer-friendly, allowing you to focus on creating engaging gameplay experiences without worrying about the complexities of data storage.
+PPDS is a high-performance Roblox DataStore wrapper that simplifies the management of persistent data with advanced caching, cross-server synchronization, and migration capabilities. It is designed to be robust, efficient, and developer-friendly, allowing you to focus on creating engaging gameplay experiences without worrying about the complexities of data storage.
 
 ## How It Works
 
-PPDB provides a sophisticated caching layer over Roblox DataStores with cross-server coordination. It loads and caches data from DataStores on each server while maintaining consistency across multiple servers through distributed locking and cache invalidation powered by **MemoryStoreService**.
+PPDS provides a sophisticated caching layer over Roblox DataStores with cross-server coordination. It loads and caches data from DataStores on each server while maintaining consistency across multiple servers through distributed locking and cache invalidation powered by **MemoryStoreService** and some **shit code**.
 
 ### Core Architecture
 
-**Global Shared Cache**: PPDB instances with the same name share a global cache, reducing memory usage and improving performance across your codebase.
+**Global Shared Cache**: PPDS instances with the same name share a global cache, reducing memory usage and improving performance across your codebase.
 
 **Cross-Server Safety**: Uses MemoryStore-based distributed locking to prevent data corruption when multiple servers access the same data simultaneously.
 
@@ -55,7 +55,7 @@ PPDB provides a sophisticated caching layer over Roblox DataStores with cross-se
 
 ## Use Cases
 
-PPDB is perfect for:
+PPDS is perfect for:
 
 - **Player Data**: Coins, levels, inventory, settings, statistics
 - **Guild/Team Data**: Shared resources, rankings, collective progress
@@ -65,10 +65,10 @@ PPDB is perfect for:
 ### Example: Player Data Management
 
 ```luau
-local PPDB = require(game.ServerScriptService.PPDB)
+local PPDS = require(game.ServerScriptService.PPDS)
 
 -- Create database with migration support
-local playerDB = PPDB.new("PlayerData", {
+local playerDB = PPDS.new("PlayerData", {
     debug = true,
     migrations = {
         function(data)
@@ -115,47 +115,45 @@ end)
 
 ❌ **IDK**: Yes, DataStore can be tricky
 
-### PPDB Solutions
+### PPDS Solutions
 
 ✅ **Automatic retries** with exponential backoff and retry maximums is 3, 2 is not enough, 4 is too much
 ✅ **Cross-server safety** with distributed locking and cache invalidation
 ✅ **Instant cache access** for loaded data
-✅ **Event-driven** architecture for real-time monitoring
-✅ **DataStore limits**: PPDB abstracts away DataStore limits and automatically handles retries.
-✅ **Data corruption**: PPDB uses cross-server locking to prevent data corruption.
-✅ **Complex migrations**: PPDB provides a robust migration system to handle data structure changes.
-✅ **Manual caching**: PPDB handles caching automatically, reducing boilerplate code.
-✅ **Server shutdowns**: PPDB ensures all data is saved before server shutdown.
+✅ **DataStore limits**: PPDS abstracts away DataStore limits and automatically handles retries.
+✅ **Data corruption**: PPDS uses cross-server locking to prevent data corruption.
+✅ **Complex migrations**: PPDS provides a robust migration system to handle data structure changes.
+✅ **Manual caching**: PPDS handles caching automatically, reducing boilerplate code.
+✅ **Server shutdowns**: PPDS ensures all data is saved before server shutdown.
 
 ## Performance Characteristics
 
 - **Cache Hits**: Instant access (0ms latency)
 - **Cache Misses**: Single DataStore call with retry logic
 - **Writes**: Immediate cache update + async DataStore save
-- **Cross-Server Sync**: Sub-second invalidation via MemoryStore
+- **Cross-Server Sync**: MemoryStore-based invalidation (~100-200ms latency)
 - **Memory Usage**: Shared global cache with automatic cleanup
 
 ## Production Ready
 
-PPDB includes enterprise-grade features:
+PPDS includes enterprise-grade features:
 
 - **Discord Webhook Integration**: Real-time monitoring and alerts
 - **Comprehensive Logging**: Debug modes and operation tracking
 - **Automatic Cleanup**: Memory management and cache expiration
-- **Graceful Shutdown**: Ensures all data saves before server close
-- **Error Recovery**: Robust handling of network and API failures
+- **Error Recovery**: retry logic for handling of network and API failures
 
 ## Getting Started
 
-1. **Install**: Place PPDB ModuleScript in ServerScriptService
-2. **Create**: Instantiate database with `PPDB.new()`
+1. **Install**: Place PPDS ModuleScript in ServerScriptService
+2. **Create**: Instantiate database with `PPDS.new()`
 3. **Initialize**: Load data with `init()` or `get()`
 4. **Update**: Safely modify with `update()` or `set()`
 5. **Monitor**: Connect to events for real-time insights
 
 ```luau
-local PPDB = require(game.ServerScriptService.PPDB)
-local db = PPDB.new("MyData", { debug = true })
+local PPDS = require(game.ServerScriptService.PPDS)
+local db = PPDS.new("MyData", { debug = true })
 
 -- Load data
 db:init("Player_123", { score = 0 }, function(success, data)
@@ -210,18 +208,18 @@ db:setWebhook("https://discord.com/api/webhooks/...")
 db:sendToDiscord(true)
 ```
 
-## When NOT to Use PPDB
+## When NOT to Use PPDS
 
-PPDB is optimized for structured, persistent data storage. Consider alternatives for:
+PPDS is optimized for structured, persistent data storage. Consider alternatives for:
 
 - **Real-time leaderboards**: Use OrderedDataStore directly
 - **Highly volatile data**: Frequent changes may overwhelm the system
-- **Client-side data**: PPDB is server-only
+- **Client-side data**: PPDS is server-only
 - **Temporary session data**: Consider regular variables or attributes
 
 ## Contributing
 
-PPDB is open for contributions! Whether you have ideas for improvements, bug fixes, or new features, we welcome your input:
+PPDS is open for contributions! Whether you have ideas for improvements, bug fixes, or new features, we welcome your input:
 
 - 🐛 **Report Issues**: Found a bug? Open an issue with detailed reproduction steps
 - 💡 **Feature Requests**: Have an idea? Share it in the discussions
@@ -232,12 +230,12 @@ Visit the [GitHub repository](https://github.com/Paopun20/PaoPaoDataStore) to ge
 
 ## License
 
-PPDB is released under the **Apache License 2.0**. This permissive license allows you to use, modify, and distribute PPDB in both personal and commercial projects.
+PPDS is released under the **Apache License 2.0**. This permissive license allows you to use, modify, and distribute PPDS in both personal and commercial projects.
 
 See the [LICENSE](https://raw.githubusercontent.com/Paopun20/PaoPaoDataStore/main/LICENSE) file for complete details.
 
 ---
 
-> **Note**: PPDB represents a production-ready DataStore solution with enterprise features. While the API is stable, we continuously improve performance and add features based on community feedback.
+> **Note**: PPDS represents a production-ready DataStore solution with enterprise features. While the API is stable, we continuously improve performance and add features based on community feedback.
 
 > **Note 2 (A Very Important!):** some api changes may occur in the future, so please check back regularly for updates, not 100% guaranteed that the api will not change, but i will try to keep it stable.
