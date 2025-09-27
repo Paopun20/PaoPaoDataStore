@@ -3,7 +3,7 @@
 --!optimize 2
 --!native
 -- ============================================================================
--- PPDB – PaoPao's DataStore Module (refactored)
+-- PPDB – PaoPao's DataStore Module
 -- High-performance, caching, migration-friendly DataStore wrapper
 -- Copyright 2025 PaoPaoDev
 -- Licensed under Apache 2.0
