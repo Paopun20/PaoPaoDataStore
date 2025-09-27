@@ -422,20 +422,19 @@ end
 function PPDB:_acquireLock(key: string)
 	local lockKey = self._name .. ":" .. key .. ":" .. HttpService:GenerateGUID(false)
 	local ok, _ = _retryOperation(function()
-		return MEMORY_QUEUE:PushBack(_serialize({ lock = lockKey }), 10)
+		return MEMORY_QUEUE:AddAsync(_serialize({ lock = lockKey }), 10)
 	end, 3, self._debug)
 	return ok, lockKey
 end
 
 function PPDB:_releaseLock(lockKey: string)
 	local ok, _ = _retryOperation(function()
-		local item = MEMORY_QUEUE:PopFront()
-		if item then
-			local data = _deserialize(item)
+		local item = MEMORY_QUEUE:ReadAsync(1, true, 10) -- Read the first item
+		if item and item[1] then
+			local data = _deserialize(item[1])
 			if data and data.lock == lockKey then
+				MEMORY_QUEUE:RemoveAsync() -- Remove the item
 				return true
-			else
-				MEMORY_QUEUE:PushBack(item, 10)
 			end
 		end
 		return false
@@ -467,7 +466,7 @@ function PPDB:_scheduleWriteFlush(key: string)
 
 		self:_releaseLock(lockKey)
 		if success then
-			MEMORY_QUEUE:PushBack(_serialize({ name = self._name, key = key }), 60)
+			MEMORY_QUEUE:AddAsync(_serialize({ name = self._name, key = key }), 60)
 			self.OnSave:Fire(key, data)
 			self:_logToDiscord(string.format("Saved key: %s", key))
 		else
