@@ -2,240 +2,86 @@
 
 PPDS is a high-performance Roblox DataStore wrapper that simplifies the management of persistent data with advanced caching, cross-server synchronization, and migration capabilities. It is designed to be robust, efficient, and developer-friendly, allowing you to focus on creating engaging gameplay experiences without worrying about the complexities of data storage.
 
-## How It Works
+## Features
 
-PPDS provides a sophisticated caching layer over Roblox DataStores with cross-server coordination. It loads and caches data from DataStores on each server while maintaining consistency across multiple servers through distributed locking and cache invalidation powered by **MemoryStoreService** and some **shit code**.
+- **Global Shared Cache**: Data is cached across all server instances, ensuring consistency and reducing DataStore calls.
+- **Cross-Server Locking**: Prevents data corruption from concurrent writes across multiple servers using MemoryStoreService.
+- **Automatic Data Migrations**: Seamlessly update your data structure over time without losing player data.
+- **Event-Driven Architecture**: Integrate with your game logic using `OnInit`, `OnSave`, `OnDelete`, and `OnInvalidate` events.
+- **Robust Error Handling**: Built-in exponential backoff retry logic for DataStore operations.
+- **Discord Webhook Integration**: Monitor critical DataStore events and errors directly in Discord.
+- **Session Management**: Efficiently handle player data loading, saving, and cleanup.
+- **Development Tools**: Export/import cache snapshots for debugging and testing.
 
-### Core Architecture
+## How it work
 
-**Global Shared Cache**: PPDS instances with the same name share a global cache, reducing memory usage and improving performance across your codebase.
-
-**Cross-Server Safety**: Uses MemoryStore-based distributed locking to prevent data corruption when multiple servers access the same data simultaneously.
-
-**Smart Write Batching**: Changes are applied to cache immediately for instant access, then written to DataStore asynchronously with automatic retry logic and exponential backoff.
-
-**Event-Driven Design**: Built-in signals (`OnInit`, `OnSave`, `OnDelete`, `OnInvalidate`) allow you to monitor and respond to data operations in real-time.
-
-## Key Features
-
-### **High Performance**
-
-- Instant cache access for loaded data
-- Batched writes reduce DataStore API calls
-- Exponential backoff retry logic with jitter
-- JSON serialization caching for optimization
-
-### **Cross-Server Safety**
-
-- Distributed locking prevents data corruption
-- Automatic cache invalidation across servers
-- Race condition protection for concurrent updates
-- Safe player server-hopping support
-
-### **Developer Experience**
-
-- Familiar API similar to native DataStore
-- Comprehensive event system for monitoring
-- Built-in debugging and logging capabilities
-- Discord webhook integration for production monitoring
-
-### **Scalability**
-
-- Global cache sharing reduces memory overhead
-- Automatic cache expiration and cleanup
-- Supports both player and global data patterns
-- Handles high-frequency operations efficiently
-
-### **Migration System**
-
-- Automatic data structure versioning
-- Sequential migration application
-- Error-safe migration handling
-- Seamless updates without data loss
-
-## Use Cases
-
-PPDS is perfect for:
-
-- **Player Data**: Coins, levels, inventory, settings, statistics
-- **Guild/Team Data**: Shared resources, rankings, collective progress
-- **Global Systems**: Economy data, server statistics, configuration
-- **Session Data**: Temporary data that needs cross-server persistence
-
-### Example: Player Data Management
-
-```luau
-local PPDS = require(game.ServerScriptService.PPDS)
-
--- Create database with migration support
-local playerDB = PPDS.new("PlayerData", {
-    debug = true,
-    migrations = {
-        function(data)
-            -- Add inventory system
-            data.inventory = data.inventory or {}
-            return data
-        end
-    }
-})
-
--- Handle player joining
-game.Players.PlayerAdded:Connect(function(player)
-    local key = "Player_" .. player.UserId
-
-    playerDB:init(key, {
-        coins = 0,
-        level = 1,
-        inventory = {}
-    }, function(success, data)
-        if success then
-            player:SetAttribute("Coins", data.coins)
-            print("Player loaded:", data.coins, "coins")
-        end
-    end)
-end)
-
--- Safe currency updates
-local function awardCoins(player, amount)
-    playerDB:update("Player_" .. player.UserId, function(data)
-        data.coins = data.coins + amount
-        return data
-    end)
-end
-
--- Cleanup on leave
-game.Players.PlayerRemoving:Connect(function(player)
-    playerDB:leave("Player_" .. player.UserId)
-end)
+``` mermaid
+graph TD
+    A[Player Joins] --> B[Load Data from Cache or DataStore]
+    B --> C{Data Exists?}
+    C -- Yes --> D[Initialize Player Data]
+    C -- No --> E[Create New Data Entry]
+    D --> F[Player Plays Game]
+    E --> F
+    F --> G{Data Changes?}
+    G -- Yes --> H[Update Cache and Schedule Save]
+    G -- No --> I[Continue Playing]
+    H --> J[Save Data to DataStore with Locking]
+    J --> K{Save Successful?}
+    K -- Yes --> L[Confirm Save and Update Cache]
+    K -- No --> M[Retry Save with Exponential Backoff]
+    L --> I
+    M --> I
+    I --> N[Player Leaves]
+    N --> O[Save Final Data and Cleanup Cache]
 ```
 
-## Architecture Benefits
+### Design Principles
 
-### Traditional DataStore Issues
+$$
+\text{Data Consistency} \propto \frac{\text{Cross-Server Locking} + \text{Global Shared Cache}}{\text{Concurrent Writes}}
+$$
 
-❌ **IDK**: Yes, DataStore can be tricky
+$$
+\text{Performance} \propto \frac{\text{Caching} + \text{Efficient DataStore Calls}}{\text{Latency}}
+$$
 
-### PPDS Solutions
+$$
+\text{Reliability} \propto \frac{\text{Error Handling} + \text{Retry Logic}}{\text{Data Loss}}
+$$
 
-✅ **Automatic retries** with exponential backoff and retry maximums is 3, 2 is not enough, 4 is too much
-✅ **Cross-server safety** with distributed locking and cache invalidation
-✅ **Instant cache access** for loaded data
-✅ **DataStore limits**: PPDS abstracts away DataStore limits and automatically handles retries.
-✅ **Data corruption**: PPDS uses cross-server locking to prevent data corruption.
-✅ **Complex migrations**: PPDS provides a robust migration system to handle data structure changes.
-✅ **Manual caching**: PPDS handles caching automatically, reducing boilerplate code.
-✅ **Server shutdowns**: PPDS ensures all data is saved before server shutdown.
+$$
+\text{Developer Experience} \propto \frac{\text{Automatic Migrations} + \text{Event System}}{\text{Boilerplate Code}}
+$$
 
-## Performance Characteristics
+---
 
-- **Cache Hits**: Instant access (0ms latency)
-- **Cache Misses**: Single DataStore call with retry logic
-- **Writes**: Immediate cache update + async DataStore save
-- **Cross-Server Sync**: MemoryStore-based invalidation (~100-200ms latency)
-- **Memory Usage**: Shared global cache with automatic cleanup
+## Quick Start
 
-## Production Ready
+To get started with PPDS, check out the detailed documentation and tutorials:
 
-PPDS includes enterprise-grade features:
+[Getting Started Guide](./tutorial/setup.md){ .md-button }
+[API Reference](./reference/api.md){ .md-button }
 
-- **Discord Webhook Integration**: Real-time monitoring and alerts
-- **Comprehensive Logging**: Debug modes and operation tracking
-- **Automatic Cleanup**: Memory management and cache expiration
-- **Error Recovery**: retry logic for handling of network and API failures
-
-## Getting Started
-
-1. **Install**: Place PPDS ModuleScript in ServerScriptService
-2. **Create**: Instantiate database with `PPDS.new()`
-3. **Initialize**: Load data with `init()` or `get()`
-4. **Update**: Safely modify with `update()` or `set()`
-5. **Monitor**: Connect to events for real-time insights
-
-```luau
-local PPDS = require(game.ServerScriptService.PPDS)
-local db = PPDS.new("MyData", { debug = true })
-
--- Load data
-db:init("Player_123", { score = 0 }, function(success, data)
-    print("Loaded:", data.score)
-end)
-
--- Update safely
-db:update("Player_123", function(data)
-    data.score = data.score + 100
-    return data
-end)
-```
-
-## Advanced Features
-
-### Event System
-
-```luau
-db.OnSave:Connect(function(key, data)
-    print("💾 Saved:", key)
-end)
-
-db.OnInit:Connect(function(key, data)
-    print("📥 Loaded:", key)
-end)
-```
-
-### Migration Example
-
-```luau
-local migrations = {
-    function(data)
-        -- V1: Add new field
-        data.newField = "default"
-        return data
-    end,
-    function(data)
-        -- V2: Restructure data
-        if data.oldFormat then
-            data.newFormat = transform(data.oldFormat)
-            data.oldFormat = nil
-        end
-        return data
-    end
-}
-```
-
-### Production Monitoring
-
-```luau
-db:setWebhook("https://discord.com/api/webhooks/...")
-db:sendToDiscord(true)
-```
-
-## When NOT to Use PPDS
-
-PPDS is optimized for structured, persistent data storage. Consider alternatives for:
-
-- **Real-time leaderboards**: Use OrderedDataStore directly
-- **Highly volatile data**: Frequent changes may overwhelm the system
-- **Client-side data**: PPDS is server-only
-- **Temporary session data**: Consider regular variables or attributes
-
-## Contributing
-
-PPDS is open for contributions! Whether you have ideas for improvements, bug fixes, or new features, we welcome your input:
-
-- 🐛 **Report Issues**: Found a bug? Open an issue with detailed reproduction steps
-- 💡 **Feature Requests**: Have an idea? Share it in the discussions
-- 🔧 **Pull Requests**: Ready to contribute code? Submit a PR with tests
-- 📚 **Documentation**: Help improve docs and examples
-
-Visit the [GitHub repository](https://github.com/Paopun20/PaoPaoDataStore) to get involved!
+And try this
+++alt+f4++
 
 ## License
 
 PPDS is released under the **Apache License 2.0**. This permissive license allows you to use, modify, and distribute PPDS in both personal and commercial projects.
 
-See the [LICENSE](https://raw.githubusercontent.com/Paopun20/PaoPaoDataStore/main/LICENSE) file for complete details.
+[See the LICENSE file for complete details.](https://raw.githubusercontent.com/Paopun20/PaoPaoDataStore/main/LICENSE){ .md-button }
 
 ---
 
-> **Note**: PPDS represents a production-ready DataStore solution with enterprise features. While the API is stable, we continuously improve performance and add features based on community feedback.
+!!! note "note 1 (Important)"
 
-> **Note 2 (A Very Important!):** some api changes may occur in the future, so please check back regularly for updates, not 100% guaranteed that the api will not change, but i will try to keep it stable.
+    !!! note "sub-note 1"
+        PPDS represents a production-ready DataStore solution with enterprise features. While the API is stable, we continuously improve performance and add features based on community feedback.
+        
+    !!! note "sub-note 2 (A Very Important!)"
+
+        some api changes may occur in the future, so please check back regularly for updates, not 100% guaranteed that the api will not change, but i will try to keep it stable.
+
+    !!! note "sub-note 3"
+        If you encounter any issues or have suggestions for improvement, please open an issue on the [GitHub repository](https://github.com/Paopun20/PaoPaoDataStore/issues) but good /w pull request and bug fixes in pull request.
