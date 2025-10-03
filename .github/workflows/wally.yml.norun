@@ -3,7 +3,7 @@ name: Wally Publish on SemVer Tag
 on:
   push:
     tags:
-      - 'v*.*.*'
+      - '*.*.*'
 
 jobs:
   publish:
