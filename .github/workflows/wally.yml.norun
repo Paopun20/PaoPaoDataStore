@@ -1,0 +1,31 @@
+name: Wally Publish on SemVer Tag
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install Rust (required for Wally)
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - name: Install Wally
+        run: cargo install --git https://github.com/UpliftGames/wally
+
+      - name: Install dependencies
+        run: wally install
+
+      - name: Publish to Wally
+        env:
+          WALLY_API_KEY: ${{ secrets.WALLY_API_KEY }}
+        run: wally publish
