@@ -92,6 +92,7 @@ jobs:
           unzip wally.zip
           mv wally /usr/local/bin/wally
           chmod +x /usr/local/bin/wally
+          rm -rf wally.zip
           wally --version
       
       - name: Wally login with GitHub token
