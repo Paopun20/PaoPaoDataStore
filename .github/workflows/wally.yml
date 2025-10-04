@@ -64,3 +64,32 @@ jobs:
       # Show repo root after copy
       - name: List files after shit
         run: ls -alR $(pwd)
+
+      - name: move paopaodatastore.luau and wally.toml to temp folder
+        run: |
+          mkdir temp
+          mv paopaodatastore.luau temp/
+          mv wally.toml temp/
+          echo ">>> Moved paopaodatastore.luau and wally.toml to temp folder"
+
+      - name: Delete all files except temp folder
+        run: |
+          find . -maxdepth 1 ! -name "temp" ! -name "." ! -name ".." -exec rm -rf {} +
+          echo ">>> Deleted all files except temp folder"
+
+      - name: Move files back from temp folder
+        run: |
+          mv temp/* .
+          rmdir temp
+          echo ">>> Moved files back from temp folder and deleted temp folder"
+
+      - name: List files after cleanup
+        run: ls -alR $(pwd)
+
+      - name: Download Wally
+        run: |
+          curl -L https://github.com/UpliftGames/wally/releases/download/v0.3.2/wally-v0.3.2-linux.zip -o wally.zip
+          unzip wally.zip
+          mv wally /usr/local/bin/wally
+          chmod +x /usr/local/bin/wally
+          wally --version
