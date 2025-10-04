@@ -6,7 +6,6 @@ on:
 jobs:
   prepare-wally-branch:
     runs-on: ubuntu-latest
-
     steps:
       # Checkout repo
       - name: Checkout repository
@@ -18,86 +17,36 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-      - name: Show current directory
-        run: pwd
+      # Show repo root for debug
+      - name: List files before copy
+        run: ls -alR
 
-      # Show repo root before copy
-      - name: List files after shit
-        run: ls -alR $(pwd)
-
-      # Copy PaoPaoDataStore folder
-      - name: Copy PaoPaoDataStore to root
+      # Copy PaoPaoDataStore to root
+      - name: Copy PaoPaoDataStore
         run: |
           cp -r src/PaoPaoDataStore/* .
           echo ">>> Copied PaoPaoDataStore to root"
 
-      # Show files after copy
-      - name: Show files after copy
+      # Keep only necessary files (wally.toml, paopaodatastore.luau, default.project.json)
+      - name: Cleanup root folder
         run: |
-          echo ">>> Root files:"
-          ls -la
-          echo ">>> Full directory structure:"
-          ls -R
+          find . -maxdepth 1 ! -name "." ! -name ".." ! -name "wally.toml" ! -name "paopaodatastore.luau" ! -name "default.project.json" -exec rm -rf {} +
+          echo ">>> Cleaned up unnecessary files"
+          ls -alR
 
-      # Rename init.luau if exists
-      - name: Rename init.luau -> paopaodatastore.luau
-        run: |
-          if [ -f "init.luau" ]; then
-            mv init.luau paopaodatastore.luau
-            echo ">>> Renamed init.luau -> paopaodatastore.luau"
-          else
-            echo ">>> init.luau not found, skipping rename"
-          fi
-
-      # Check wally.toml
-      - name: Check wally.toml exists
-        run: |
-          if [ ! -f "wally.toml" ]; then
-            echo "ERROR: wally.toml missing!"
-            exit 1
-          fi
-          echo ">>> wally.toml exists"
-
-      # Show repo root after copy
-      - name: List files after shit
-        run: ls -alR $(pwd)
-
-      - name: move paopaodatastore.luau and wally.toml to temp folder
-        run: |
-          mkdir temp
-          mv paopaodatastore.luau temp/
-          mv wally.toml temp/
-          echo ">>> Moved paopaodatastore.luau and wally.toml to temp folder"
-
-      - name: Delete all files except temp folder
-        run: |
-          find . -maxdepth 1 ! -name "temp" ! -name "." ! -name ".." -exec rm -rf {} +
-          echo ">>> Deleted all files except temp folder"
-
-      - name: Move files back from temp folder
-        run: |
-          mv temp/* .
-          rmdir temp
-          echo ">>> Moved files back from temp folder and deleted temp folder"
-
-      - name: List files after cleanup
-        run: ls -alR $(pwd)
-
-      - name: Download Wally
+      # Download & install Wally
+      - name: Download Wally CLI
         run: |
           curl -L https://github.com/UpliftGames/wally/releases/download/v0.3.2/wally-v0.3.2-linux.zip -o wally.zip
           unzip wally.zip
           mv wally /usr/local/bin/wally
           chmod +x /usr/local/bin/wally
-          rm -rf wally.zip
+          rm -f wally.zip
 
+      # Wally login & publish
       - name: Wally Publish
+        env:
+          WALLY_API_KEY: ${{ secrets.WALLY_API_KEY }}
         run: |
-          echo ">>> Wally version:"
-          wally --version
-
-          echo ">>> Wally login:" # It's better to use the manual system.
-          wally login
-          
-          echo ">>> Wally publish:"
+          wally login --token $WALLY_API_KEY
           wally publish --verbose
