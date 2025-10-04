@@ -35,7 +35,7 @@ jobs:
 
       # Show repo root before copy
       - name: List files after shit
-        run: ls -alR ./src
+        run: ls -alR $(pwd)
 
       # Copy PaoPaoDataStore folder
       - name: Copy PaoPaoDataStore to root
