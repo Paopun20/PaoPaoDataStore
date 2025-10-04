@@ -1,20 +1,12 @@
 # PPDS (PaoPao's DataStore module)
 
-A fast, server-side Roblox DataStore wrapper with caching, cross-server invalidation, migrations, and lifecycle hooks.
-
-## Quick Start
-
-```lua
-local PPDS = require(game.ServerScriptService.PPDS)
-local db = PPDS.new("PlayerData")
-db:init("Player_12345", { coins = 0 })
-db:increment("Player_12345", "coins", 50)
-```
+PPDS is a high-performance Roblox DataStore wrapper that simplifies the management of persistent data with advanced caching, cross-server synchronization, and migration capabilities. It is designed to be robust, efficient, and developer-friendly, allowing you to focus on creating engaging gameplay experiences without worrying about the complexities of data storage.
 
 ## Installation
 
-* Get from [Roblox Asset Library](https://www.roblox.com/library/95562270661505/) or [GitHub](https://github.com/Paopun20/PaoPaoDataStore).
-* Place `PaoPaoDataStore` in `ServerScriptService` or your preferred server-side location.
+[Roblox Asset Library](https://www.roblox.com/library/95562270661505/)
+[GitHub](https://github.com/Paopun20/PaoPaoDataStore)
+[Wally](https://wally.run/package/paopun20/paopaodatastore)
 
 ## Contributing
 

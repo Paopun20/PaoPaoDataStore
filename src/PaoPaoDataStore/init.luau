@@ -76,9 +76,6 @@ PPDB.DBOptions.__index = PPDB.DBOptions
 function PPDB.DBOptions.new()
 	return setmetatable({
 		debug = false,
-		cache = true,
-		discordWebhook = "",
-		enableDiscordLog = false,
 		migrations = {},
 	}, PPDB.DBOptions)
 end
@@ -107,9 +104,7 @@ function PPDB.new(name: string, DBOptions: PPDB.DBOptions?)
 		_store = DataStoreService:GetDataStore(name),
 		_cache = {},
 		debug = DBOptions.debug or false,
-		_cacheEnabled = DBOptions.cache ~= false,
-		discordWebhook = DBOptions.discordWebhook or "",
-		enableDiscordLog = DBOptions.enableDiscordLog or false,
+		migrations = DBOptions.migrations or {},
 		OnInit = Signal.new(),
 		OnSave = Signal.new(),
 		OnDelete = Signal.new(),
@@ -159,24 +154,6 @@ function PPDB:_retryOperation(fn)
 	return false, "Retry failed"
 end
 
-function PPDB:_logToDiscord(message: string)
-	if not self.enableDiscordLog or self.discordWebhook == "" then
-		return
-	end
-	task.spawn(function()
-		local ok, res = pcall(function()
-			HttpService:PostAsync(
-				self.discordWebhook,
-				HttpService:JSONEncode({ content = message }),
-				Enum.HttpContentType.ApplicationJson
-			)
-		end)
-		if not ok and self.debug then
-			warn("Discord log failed:", tostring(res))
-		end
-	end)
-end
-
 -- Queue-based lock acquire (wait until done)
 function PPDB:_acquireLock(key: string)
 	if RunService:IsStudio() then
@@ -220,6 +197,21 @@ function PPDB:init(key: string, defaultData: table?, cb: ((boolean, any) -> ())?
 		end)
 		data = (ok and data) or defaultData or {}
 		data._t = tick()
+		
+		-- Run migrations
+		for index, migrate in ipairs(self.migrations) do
+			if type(migrate) == "function" then
+				local success, newData = pcall(migrate, deepCopy(data))
+				if success and type(newData) == "table" then
+					data = newData or data -- in case migration returns nil
+				else
+					if self.debug then
+						warn(string.format("[PPDB Migration %d] failed for key %s: %s", index, key, tostring(newData)))
+					end
+				end
+			end
+		end
+
 		self._cache[key] = data
 		self.OnInit:Fire(key, data)
 		if cb then
@@ -260,7 +252,6 @@ function PPDB:set(key: string, value)
 	self._cache[key] = value
 	self.OnSave:Fire(key, value)
 	self:_scheduleWriteFlush(key)
-	self:_logToDiscord(("Saved key: %s"):format(key))
 end
 
 function PPDB:update(key: string, fn)
@@ -337,7 +328,6 @@ function PPDB:leave(key: string)
 		end
 		self._cache[key] = nil
 		self.OnDelete:Fire(key)
-		self:_logToDiscord(("Deleted key: %s"):format(key))
 	end
 end
 

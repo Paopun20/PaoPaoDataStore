@@ -13,7 +13,6 @@ PPDS provides a robust caching layer over Roblox DataStore with advanced feature
 * **Automatic migration system** for data structure updates
 * **Event-driven architecture** with signals
 * **Exponential backoff retry logic**
-* **Discord webhook integration** for monitoring
 
 ---
 
@@ -27,7 +26,6 @@ local PPDS = require(path.to.PPDS)
 -- Create DBOptions object
 local options = PPDS.DBOptions.new()
 options.debug = true
-options.discordWebhook = "https://discord.com/api/webhooks/..."
 
 -- Create a database instance
 local db = PPDS.new("PlayerData", options)
@@ -64,8 +62,6 @@ Creates a new database instance with global cache sharing.
 * `DBOptions` *(PPDS.DBOptions, optional)*:
 
   * `debug` *(boolean)*: Enable debug logging
-  * `cache` *(boolean)*: Enable or disable caching (default: true)
-  * `discordWebhook` *(string)*: Optional webhook URL for logging
 
 **Returns:** PPDS instance with event signals and automatic cleanup
 
@@ -75,7 +71,6 @@ Creates a new database instance with global cache sharing.
 -- Create a new database instance with DBOptions
 local options = PPDS.DBOptions.new()
 options.debug = true
-options.discordWebhook = "https://discord.com/api/webhooks/..."
 
 local db = PPDS.new("PlayerData", options)
 ```
@@ -124,7 +119,7 @@ Atomically increments a numeric field.
 
 ### **PPDS:leave(key)**
 
-Immediately saves data and removes from cache. Fires `OnDelete` event and optionally logs to Discord.
+Immediately saves data and removes from cache. Fires `OnDelete` event.
 
 ---
 
@@ -141,13 +136,6 @@ Immediately saves data and removes from cache. Fires `OnDelete` event and option
 * **OnSave** – Fired when data is saved to DataStore
 * **OnDelete** – Fired when data is removed from cache
 * **OnInvalidate** – Fired when data should be refreshed (cross-server sync)
-
----
-
-## Discord Integration
-
-* **PPDS:setWebhook(url)** – Set webhook URL
-* **PPDS:sendToDiscord(enabled)** – Enable/disable logging
 
 ---
 

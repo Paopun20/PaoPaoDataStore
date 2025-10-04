@@ -9,50 +9,48 @@ PPDS is a high-performance Roblox DataStore wrapper that simplifies the manageme
 - **Automatic Data Migrations**: Seamlessly update your data structure over time without losing player data.
 - **Event-Driven Architecture**: Integrate with your game logic using `OnInit`, `OnSave`, `OnDelete`, and `OnInvalidate` events.
 - **Robust Error Handling**: Built-in exponential backoff retry logic for DataStore operations.
-- **Discord Webhook Integration**: Monitor critical DataStore events and errors directly in Discord.
 - **Session Management**: Efficiently handle player data loading, saving, and cleanup.
 - **Development Tools**: Export/import cache snapshots for debugging and testing.
 
-## How it work
+## How it work (not full details yet)
 
 ``` mermaid
 graph TD
-    A[Player Joins] --> B[Load Data from Cache or DataStore]
-    B --> C{Data Exists?}
-    C -- Yes --> D[Initialize Player Data]
-    C -- No --> E[Create New Data Entry]
-    D --> F[Player Plays Game]
-    E --> F
-    F --> G{Data Changes?}
-    G -- Yes --> H[Update Cache and Schedule Save]
-    G -- No --> I[Continue Playing]
-    H --> J[Save Data to DataStore with Locking]
-    J --> K{Save Successful?}
-    K -- Yes --> L[Confirm Save and Update Cache]
-    K -- No --> M[Retry Save with Exponential Backoff]
-    L --> I
-    M --> I
-    I --> N[Player Leaves]
-    N --> O[Save Final Data and Cleanup Cache]
+    %% Requests
+    A[Server Request] --> B(PPDS: init / get / set / update / increment / leave)
+    
+    %% Cache Flow
+    B --> C{Cache Hit?}
+    C -- Yes --> D[Return Cached Data]
+    C -- No --> E[Read from DataStore]
+    
+    %% DataStore Success Path
+    E --> F{DataStore Success?}
+    F -- Yes --> G[Update Cache]
+    G --> D
+    
+    %% DataStore Failure Path
+    F -- No --> H[Retry with Exponential Backoff]
+    H -- Success --> G
+    H -- Failure --> I[Error Handling]
+    
+    %% Event Propagation
+    D --> J[Trigger Events: OnSave / OnInit / OnDelete]
+    J --> K[Cross-Server Sync / Invalidation]
+    K --> L[Other Servers / Clients]
+    
+    %% Async Write Path
+    B -- set / update / increment --> M[Queue for Async Write]
+    M --> N[DataStore Write Batching]
+    N --> O[DataStore Save]
+    O -- Success --> P[Trigger OnSave Event]
+    O -- Failure --> Q[Retry / Error Handling]
+    
+    class C,D,G cache;
+    class E,F,H,O,N datastore;
+    class J,K,L,P events;
+    class M,Q async;
 ```
-
-### Design Principles
-
-$$
-\text{Data Consistency} \propto \frac{\text{Cross-Server Locking} + \text{Global Shared Cache}}{\text{Concurrent Writes}}
-$$
-
-$$
-\text{Performance} \propto \frac{\text{Caching} + \text{Efficient DataStore Calls}}{\text{Latency}}
-$$
-
-$$
-\text{Reliability} \propto \frac{\text{Error Handling} + \text{Retry Logic}}{\text{Data Loss}}
-$$
-
-$$
-\text{Developer Experience} \propto \frac{\text{Automatic Migrations} + \text{Event System}}{\text{Boilerplate Code}}
-$$
 
 ---
 
@@ -63,8 +61,7 @@ To get started with PPDS, check out the detailed documentation and tutorials:
 [Getting Started Guide](./tutorial/setup.md){ .md-button }
 [API Reference](./reference/api.md){ .md-button }
 
-And try this
-++alt+f4++
+---
 
 ## License
 
@@ -73,6 +70,8 @@ PPDS is released under the **Apache License 2.0**. This permissive license allow
 [See the LICENSE file for complete details.](https://raw.githubusercontent.com/Paopun20/PaoPaoDataStore/main/LICENSE){ .md-button }
 
 ---
+
+## Note from (solo) Dev
 
 !!! note "note 1 (Important)"
 
@@ -85,3 +84,6 @@ PPDS is released under the **Apache License 2.0**. This permissive license allow
 
     !!! note "sub-note 3"
         If you encounter any issues or have suggestions for improvement, please open an issue on the [GitHub repository](https://github.com/Paopun20/PaoPaoDataStore/issues) but good /w pull request and bug fixes in pull request.
+
+<img src="./media/images/0512.gif" alt="lol" width="300">
+<img src="https://media1.tenor.com/m/KuoTTmJ6o40AAAAC/get-real-cat.gif" alt="Funny Cat">

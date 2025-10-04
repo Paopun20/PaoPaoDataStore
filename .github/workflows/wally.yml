@@ -39,6 +39,8 @@ jobs:
 
       # Wally login & publish
       - name: Wally Publish
+        env:
+          WALLY_TOKEN: ${{ secrets.WALLY_TOKEN }}
         run: |
-          wally login
+          wally login --token ${{ secrets.WALLY_TOKEN }}
           wally publish --verbose
