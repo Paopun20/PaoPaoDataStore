@@ -42,5 +42,5 @@ jobs:
         env:
           WALLY_TOKEN: ${{ secrets.WALLY_TOKEN }}
         run: |
-          wally login --token ${{ secrets.WALLY_TOKEN }}
+          wally login --token "${{ secrets.WALLY_TOKEN }}"
           wally publish --verbose
