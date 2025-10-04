@@ -11,55 +11,74 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      # Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
+      # Setup git user
       - name: Setup Git
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-      - name: Create/Update Wally branch
+      # Create orphan branch
+      - name: Create orphan branch
         run: |
-          set -x  # เปิด debug mode
+          set -x
           BRANCH_NAME="wally-paopaodatastore"
-
-          # orphan branch (empty history)
           git checkout --orphan "$BRANCH_NAME"
           git reset --hard
+          echo ">>> Created orphan branch: $BRANCH_NAME"
 
-          # copy only PaoPaoDataStore folder to root
-          echo ">>> Copying src/PaoPaoDataStore/* to root..."
+      # Show repo root before copy
+      - name: Show repo root (before copy)
+        run: ls -la
+
+      # Copy PaoPaoDataStore folder
+      - name: Copy PaoPaoDataStore to root
+        run: |
           cp -r src/PaoPaoDataStore/* .
+          echo ">>> Copied PaoPaoDataStore to root"
 
-          echo ">>> Files at root after copy:"
-          ls -la .
-
-          # show all directories recursively
+      # Show files after copy
+      - name: Show files after copy
+        run: |
+          echo ">>> Root files:"
+          ls -la
           echo ">>> Full directory structure:"
           ls -R
 
-          # rename init.luau -> paopaodatastore.luau if exists
+      # Rename init.luau if exists
+      - name: Rename init.luau -> paopaodatastore.luau
+        run: |
           if [ -f "init.luau" ]; then
-            echo ">>> Renaming init.luau -> paopaodatastore.luau"
             mv init.luau paopaodatastore.luau
+            echo ">>> Renamed init.luau -> paopaodatastore.luau"
           else
             echo ">>> init.luau not found, skipping rename"
           fi
 
-          # check if wally.toml exists
+      # Check wally.toml
+      - name: Check wally.toml exists
+        run: |
           if [ ! -f "wally.toml" ]; then
-            echo "ERROR: wally.toml missing in PaoPaoDataStore folder!"
+            echo "ERROR: wally.toml missing!"
             exit 1
           fi
+          echo ">>> wally.toml exists"
 
-          echo ">>> Final file list at root:"
-          ls -la .
+      # Show final files before commit
+      - name: Show final files
+        run: ls -la
 
+      # Commit changes
+      - name: Commit changes
+        run: |
           git add .
           git commit -m "Update Wally branch from PaoPaoDataStore (renamed init.luau)" || echo "No changes to commit"
 
-          # force push (overwrite branch on remote)
-          git push origin "$BRANCH_NAME" --force
+      # Force push
+      - name: Force push branch
+        run: git push origin "$BRANCH_NAME" --force
