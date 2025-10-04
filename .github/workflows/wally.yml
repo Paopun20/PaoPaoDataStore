@@ -1,4 +1,4 @@
-name: Wally Publish on SemVer Tag
+name: Wally Publish
 
 on:
   push:
