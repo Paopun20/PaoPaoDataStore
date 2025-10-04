@@ -23,6 +23,7 @@ jobs:
 
       - name: Create/Update Wally branch
         run: |
+          set -x  # เปิด debug mode
           BRANCH_NAME="wally-paopaodatastore"
 
           # orphan branch (empty history)
@@ -30,11 +31,22 @@ jobs:
           git reset --hard
 
           # copy only PaoPaoDataStore folder to root
+          echo ">>> Copying src/PaoPaoDataStore/* to root..."
           cp -r src/PaoPaoDataStore/* .
+
+          echo ">>> Files at root after copy:"
+          ls -la .
+
+          # show all directories recursively
+          echo ">>> Full directory structure:"
+          ls -R
 
           # rename init.luau -> paopaodatastore.luau if exists
           if [ -f "init.luau" ]; then
+            echo ">>> Renaming init.luau -> paopaodatastore.luau"
             mv init.luau paopaodatastore.luau
+          else
+            echo ">>> init.luau not found, skipping rename"
           fi
 
           # check if wally.toml exists
@@ -42,6 +54,9 @@ jobs:
             echo "ERROR: wally.toml missing in PaoPaoDataStore folder!"
             exit 1
           fi
+
+          echo ">>> Final file list at root:"
+          ls -la .
 
           git add .
           git commit -m "Update Wally branch from PaoPaoDataStore (renamed init.luau)" || echo "No changes to commit"
