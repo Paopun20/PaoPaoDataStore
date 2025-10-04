@@ -1,9 +1,7 @@
 name: Wally Publish
 
 on:
-  push:
-    tags:
-      - "*.*.*"
+  workflow_dispatch: {}
 
 jobs:
   prepare-wally-branch:
