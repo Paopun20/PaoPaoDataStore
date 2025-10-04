@@ -13,7 +13,7 @@ jobs:
     steps:
       # Checkout repo
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: main
           fetch-depth: 0
@@ -34,14 +34,12 @@ jobs:
           git reset --hard
           echo ">>> Created orphan branch: $BRANCH_NAME"
 
-      # Show repo root before copy
-      - name: Show repo root (before copy)
-        run: ls -la
+      - name: Show current directory
+        run: pwd
 
-      - name: Check src folder content
-        run: |
-          echo ">>> Listing src folder:"
-          ls -R src
+      # Show repo root before copy
+      - name: List files after shit
+        run: ls -alR ./src
 
       # Copy PaoPaoDataStore folder
       - name: Copy PaoPaoDataStore to root
@@ -75,10 +73,6 @@ jobs:
             exit 1
           fi
           echo ">>> wally.toml exists"
-
-      # Show final files before commit
-      - name: Show final files
-        run: ls -la
 
       # Commit changes
       - name: Commit changes
