@@ -85,7 +85,11 @@ jobs:
 
       - name: Download Wally
         run: |
-          curl -sSf https://raw.githubusercontent.com/rojo-rbx/rokit/main/scripts/install.sh | bash
+          curl -L https://github.com/UpliftGames/wally/releases/download/v0.3.2/wally-v0.3.2-linux.zip -o wally.zip
+          unzip wally.zip
+          mv wally /usr/local/bin/wally
+          chmod +x /usr/local/bin/wally
+          rm -rf wally.zip
 
       - name: Wally Publish
         run: |
