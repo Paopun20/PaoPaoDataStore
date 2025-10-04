@@ -94,5 +94,10 @@ jobs:
           chmod +x /usr/local/bin/wally
           wally --version
       
-      - name: test login
-        run: wally login
+      - name: Wally login with GitHub token
+        run: |
+          wally login --token ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Wally publish
+        run: |
+          wally publish --verbose
