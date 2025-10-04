@@ -14,8 +14,6 @@ jobs:
       # Checkout repo
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          ref: main
 
       # Setup git user
       - name: Setup Git
