@@ -86,7 +86,7 @@ jobs:
       - name: List files after cleanup
         run: ls -alR $(pwd)
 
-      - name: Download Wally
+      - name: Download Wally and publish
         run: |
           curl -L https://github.com/UpliftGames/wally/releases/download/v0.3.2/wally-v0.3.2-linux.zip -o wally.zip
           unzip wally.zip
@@ -94,11 +94,6 @@ jobs:
           chmod +x /usr/local/bin/wally
           rm -rf wally.zip
           wally --version
-      
-      - name: Wally login with GitHub token
-        run: |
-          wally login --token ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Wally publish
-        run: |
+          wally login --token ${{ secrets.GITHUB_TOKEN }}
           wally publish --verbose
