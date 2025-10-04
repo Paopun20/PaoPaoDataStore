@@ -45,8 +45,6 @@ jobs:
 
       # Wally login & publish
       - name: Wally Publish
-        env:
-          WALLY_API_KEY: ${{ secrets.WALLY_API_KEY }}
         run: |
-          wally login --token $WALLY_API_KEY
+          wally login
           wally publish --verbose
