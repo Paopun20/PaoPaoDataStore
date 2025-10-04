@@ -21,16 +21,10 @@ jobs:
       - name: List files before copy
         run: ls -alR
 
-      # Copy PaoPaoDataStore to root
-      - name: Copy PaoPaoDataStore
-        run: |
-          cp -r src/PaoPaoDataStore/* .
-          echo ">>> Copied PaoPaoDataStore to root"
-
-      # Keep only necessary files (wally.toml, paopaodatastore.luau, default.project.json)
+      # Keep only necessary files (wally.toml, src/PaoPaoDataStore, default.project.json)
       - name: Cleanup root folder
         run: |
-          find . -maxdepth 1 ! -name "." ! -name ".." ! -name "wally.toml" ! -name "paopaodatastore.luau" ! -name "default.project.json" -exec rm -rf {} +
+          find . -maxdepth 1 ! -name "temp" ! -name "src" ! -name "default.project.json" ! -name "wally.toml" ! -name "." ! -name ".." -exec rm -rf {} +
           echo ">>> Cleaned up unnecessary files"
           ls -alR
 
