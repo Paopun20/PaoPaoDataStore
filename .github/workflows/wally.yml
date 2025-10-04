@@ -1,0 +1,50 @@
+name: Wally Publish on SemVer Tag
+
+on:
+  push:
+    tags:
+      - '*.*.*'
+  workflow_dispatch: {}
+
+jobs:
+  prepare-wally-branch:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Setup Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Create/Update Wally branch
+        run: |
+          BRANCH_NAME="wally-paopaodatastore"
+
+          # orphan branch (empty history)
+          git checkout --orphan "$BRANCH_NAME"
+          git reset --hard
+
+          # copy only PaoPaoDataStore folder to root
+          cp -r src/PaoPaoDataStore/* .
+
+          # rename init.luau -> paopaodatastore.luau if exists
+          if [ -f "init.luau" ]; then
+            mv init.luau paopaodatastore.luau
+          fi
+
+          # check if wally.toml exists
+          if [ ! -f "wally.toml" ]; then
+            echo "ERROR: wally.toml missing in PaoPaoDataStore folder!"
+            exit 1
+          fi
+
+          git add .
+          git commit -m "Update Wally branch from PaoPaoDataStore (renamed init.luau)" || echo "No changes to commit"
+
+          # force push (overwrite branch on remote)
+          git push origin "$BRANCH_NAME" --force

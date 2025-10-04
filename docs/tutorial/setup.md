@@ -7,18 +7,25 @@ It **must be used server-side** (e.g., inside `ServerScriptService`).
 
 ## Step 1: Get PPDS
 
-### Option 1: Roblox Library
-* Get the PPDS library model from the [Roblox Asset Library](https://www.roblox.com/library/95562270661505/).
+### Option 1: Roblox Library (not best)
+
+- Get the PPDS library model from the [Roblox Asset Library](https://www.roblox.com/library/95562270661505/).
+
+!!! note "note from paopaodev"
+
+    I'm too lazy to upload or updata every time lol.
 
 ### Option 2: GitHub
-* Clone or download from the [PaoPaoDataStore repository](https://github.com/Paopun20/PaoPaoDataStore).
 
-### Option 3: Direct Script
-* Copy the PPDS source code into a new ModuleScript in Studio.
+- Clone or download from the [PaoPaoDataStore repository](https://github.com/Paopun20/PaoPaoDataStore).
+
+### Option 3: Wally
+
+- Use [Wally](https://wally.run/package/paopun20/paopaodatastore) best for rojo project
 
 ---
 
-## Step 2: Install PPDS
+## Step 2: Install PPDS (for Option 1 and Option 2)
 
 1. **Place the Module**: Move the `PaoPaoDataStore` ModuleScript to `ServerScriptService` (or your preferred server-side location).
 2. **Rename (Optional)**: Rename it to `PPDS` for clarity.
@@ -66,12 +73,12 @@ local Players = game:GetService("Players")
 -- When player joins
 Players.PlayerAdded:Connect(function(player)
     local key = "Player_" .. player.UserId
-    
+
     -- Initialize player data
     playerDB:init(key, defaultPlayerData, function(success, data)
         if success then
             print("Player", player.Name, "loaded with", data.coins, "coins")
-            
+
             -- Set player attributes for easy access
             player:SetAttribute("Coins", data.coins)
             player:SetAttribute("Level", data.level)
@@ -86,7 +93,7 @@ end)
 -- When player leaves
 Players.PlayerRemoving:Connect(function(player)
     local key = "Player_" .. player.UserId
-    
+
     -- Save and cleanup player data
     playerDB:leave(key)
     print("Saved data for", player.Name)
@@ -110,7 +117,7 @@ local migrations = {
         end
         return data
     end,
-    
+
     -- Version 2: Restructure stats
     function(data)
         if data.kills and not data.stats then
@@ -125,7 +132,7 @@ local migrations = {
         end
         return data
     end,
-    
+
     -- Version 3: Add new currency system
     function(data)
         if not data.premium_currency then
@@ -168,13 +175,13 @@ end)
 -- Award coins safely
 local function awardCoins(player, amount)
     local key = "Player_" .. player.UserId
-    
+
     playerDB:update(key, function(data)
         data.coins = (data.coins or 0) + amount
         data.stats.totalEarned = (data.stats.totalEarned or 0) + amount
         return data
     end)
-    
+
     -- Update player attribute
     local newCoins = playerDB:get(key, defaultPlayerData).coins
     player:SetAttribute("Coins", newCoins)
@@ -184,7 +191,7 @@ end
 local function purchaseItem(player, itemName, cost)
     local key = "Player_" .. player.UserId
     local success = false
-    
+
     playerDB:update(key, function(data)
         if data.coins >= cost then
             data.coins = data.coins - cost
@@ -194,7 +201,7 @@ local function purchaseItem(player, itemName, cost)
         end
         return nil -- Cancel transaction
     end)
-    
+
     return success
 end
 ```
@@ -208,7 +215,7 @@ local leaderboardDB = PPDS.new("GlobalStats", { debug = false })
 -- Update global leaderboard
 local function updateLeaderboard(player, score)
     local key = "Leaderboard_" .. player.UserId
-    
+
     leaderboardDB:update(key, function(data)
         if not data or score > (data.bestScore or 0) then
             return {
@@ -255,13 +262,13 @@ end)
 -- Ensure data saves on server shutdown
 game:BindToClose(function()
     print("🛑 Server shutting down, saving all data...")
-    
+
     -- Force save all cached data
     playerDB:flushWrites()
-    
+
     -- Wait for saves to complete
     task.wait(3)
-    
+
     print("✅ All data saved successfully")
 end)
 ```
@@ -286,7 +293,7 @@ if IS_DEVELOPMENT then
     -- Export current cache for debugging
     local snapshot = playerDB:export()
     print("Cache snapshot:", snapshot)
-    
+
     -- Load test data
     local testData = {
         ["TestPlayer"] = { coins = 1000, level = 10 }
@@ -301,7 +308,7 @@ end
 -- Robust error handling
 local function safePlayerInit(player)
     local key = "Player_" .. player.UserId
-    
+
     playerDB:init(key, defaultPlayerData, function(success, data)
         if success then
             -- Success path
@@ -310,7 +317,7 @@ local function safePlayerInit(player)
         else
             -- Error path
             warn("Failed to load data for", player.Name)
-            
+
             -- Try to load with GET as fallback
             local fallbackData = playerDB:get(key, defaultPlayerData)
             if fallbackData then
@@ -373,15 +380,19 @@ end)
 ## Common Issues and Solutions
 
 ### Issue: "DataStore request was throttled"
+
 **Solution**: PPDS handles retries automatically, but avoid calling operations too frequently.
 
 ### Issue: Data not saving on server shutdown
+
 **Solution**: Ensure `game:BindToClose()` calls `flushWrites()` with adequate wait time.
 
 ### Issue: Memory usage growing over time
+
 **Solution**: Call `cleanCache()` periodically and use `leave()` when players disconnect.
 
 ### Issue: Data corruption across servers
+
 **Solution**: PPDS's cross-server locking handles this automatically.
 
 ---
