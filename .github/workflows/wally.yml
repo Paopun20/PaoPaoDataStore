@@ -93,3 +93,6 @@ jobs:
           mv wally /usr/local/bin/wally
           chmod +x /usr/local/bin/wally
           wally --version
+      
+      - name: test login
+        run: wally login
