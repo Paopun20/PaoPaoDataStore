@@ -21,15 +21,6 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-      # Create orphan branch
-      - name: Create orphan branch
-        run: |
-          set -x
-          BRANCH_NAME="wally-paopaodatastore"
-          git checkout --orphan "$BRANCH_NAME"
-          git reset --hard
-          echo ">>> Created orphan branch: $BRANCH_NAME"
-
       - name: Show current directory
         run: pwd
 
@@ -70,12 +61,6 @@ jobs:
           fi
           echo ">>> wally.toml exists"
 
-      # Commit changes
-      - name: Commit changes
-        run: |
-          git add .
-          git commit -m "Update Wally branch from PaoPaoDataStore (renamed init.luau)" || echo "No changes to commit"
-
-      # Force push
-      - name: Force push branch
-        run: git push origin "$BRANCH_NAME" --force
+      # Show repo root after copy
+      - name: List files after shit
+        run: ls -alR $(pwd)
