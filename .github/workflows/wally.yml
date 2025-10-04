@@ -36,6 +36,11 @@ jobs:
       - name: Show repo root (before copy)
         run: ls -la
 
+      - name: Check src folder content
+        run: |
+          echo ">>> Listing src folder:"
+          ls -R src
+
       # Copy PaoPaoDataStore folder
       - name: Copy PaoPaoDataStore to root
         run: |
