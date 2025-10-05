@@ -37,10 +37,15 @@ jobs:
           tar -xf wally.zip
           move wally.exe C:\Windows\System32\
           del wally.zip
+      
+      - name: Wally login
+        env:
+          WALLY_TOKEN: ${{ secrets.WALLY_TOKEN }}
+        run: wally login --token "${{ secrets.WALLY_TOKEN }}"
 
       # Wally login & publish
       - name: Wally Publish
         env:
           WALLY_TOKEN: ${{ secrets.WALLY_TOKEN }}
         run: |
-          wally publish --token "${{ secrets.WALLY_TOKEN }}" --verbose
+          wally publish --verbose
