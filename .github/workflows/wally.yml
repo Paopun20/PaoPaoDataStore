@@ -5,7 +5,8 @@ on:
 
 jobs:
   prepare-wally-branch:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
+
     steps:
       # Checkout repo
       - name: Checkout repository
@@ -19,10 +20,11 @@ jobs:
 
       # Show repo root for debug
       - name: List files before copy
-        run: ls -alR
+        run: dir
 
-      # Keep only necessary files (wally.toml, src/PaoPaoDataStore, default.project.json)
+      # Cleanup root folder
       - name: Cleanup root folder
+        shell: bash
         run: |
           find . -maxdepth 1 ! -name "temp" ! -name "src" ! -name "default.project.json" ! -name "wally.toml" ! -name "." ! -name ".." -exec rm -rf {} +
           echo ">>> Cleaned up unnecessary files"
@@ -31,16 +33,14 @@ jobs:
       # Download & install Wally
       - name: Download Wally CLI
         run: |
-          curl -L https://github.com/UpliftGames/wally/releases/download/v0.3.2/wally-v0.3.2-linux.zip -o wally.zip
-          unzip wally.zip
-          mv wally /usr/local/bin/wally
-          chmod +x /usr/local/bin/wally
-          rm -f wally.zip
+          curl -L https://github.com/UpliftGames/wally/releases/download/v0.3.2/wally-v0.3.2-win64.zip -o wally.zip
+          tar -xf wally.zip
+          move wally.exe C:\Windows\System32\
+          del wally.zip
 
       # Wally login & publish
       - name: Wally Publish
         env:
           WALLY_TOKEN: ${{ secrets.WALLY_TOKEN }}
         run: |
-          wally login --token "${{ secrets.WALLY_TOKEN }}" --api https://api.github.com/octocat
-          wally publish --verbose
+          wally publish --token "${{ secrets.WALLY_TOKEN }}" --verbose
