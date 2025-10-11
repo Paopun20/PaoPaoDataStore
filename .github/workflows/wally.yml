@@ -18,18 +18,6 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-      # Show repo root for debug
-      - name: List files before copy
-        run: dir
-
-      # Cleanup root folder
-      - name: Cleanup root folder
-        shell: bash
-        run: |
-          find . -maxdepth 1 ! -name "temp" ! -name "src" ! -name "default.project.json" ! -name "wally.toml" ! -name "." ! -name ".." -exec rm -rf {} +
-          echo ">>> Cleaned up unnecessary files"
-          ls -alR
-
       # Download & install Wally
       - name: Download Wally CLI
         run: |
