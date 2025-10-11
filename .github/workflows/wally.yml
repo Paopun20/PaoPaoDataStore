@@ -4,7 +4,7 @@ on:
   workflow_dispatch: {}
 
 jobs:
-  publish-wally-package:
+  publish-wally-package: # Renamed job for clarity
     runs-on: windows-latest
 
     steps:
@@ -12,33 +12,35 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Setup git user
+      # Setup git user (Good practice for any commits/tags)
       - name: Setup Git
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-      # Install Wally (Using the cleaner PowerShell method)
+      # Download & install Wally (Improved Windows path management)
       - name: Download and Add Wally CLI to Path
         id: install_wally
         run: |
+          # Define the desired version and directory
           $wally_version = "v0.3.2"
           $wally_dir = "$env:RUNNER_TEMP\wally"
           
+          # Create the directory and download the zip
           mkdir $wally_dir
           Invoke-WebRequest -Uri "https://github.com/UpliftGames/wally/releases/download/$wally_version/wally-$wally_version-win64.zip" -OutFile "$wally_dir\wally.zip"
           
+          # Extract and cleanup
           Expand-Archive -Path "$wally_dir\wally.zip" -DestinationPath $wally_dir -Force
           Remove-Item "$wally_dir\wally.zip"
           
-          # This line adds the folder to the PATH for subsequent steps
+          # Add the directory to the PATH for the remaining steps
           echo "$wally_dir" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
         shell: powershell
 
-      # CRITICAL STEP: Log in to create a persistent session/credential file
-      - name: Wally Login
-        run: wally login --token "${{ secrets.WALLY_TOKEN }}"
-      
-      # Publish (Now using the saved credential)
+      # Wally publish (Combined login and publish)
+      # NOTE: The separate wally login step is removed as it's redundant when using --token in publish.
       - name: Wally Publish
-        run: wally publish --verbose
+        env:
+          WALLY_TOKEN: ${{ secrets.WALLY_TOKEN }}
+        run: wally publish --token "${{ env.WALLY_TOKEN }}" --verbose
