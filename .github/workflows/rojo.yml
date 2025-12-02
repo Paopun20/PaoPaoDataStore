@@ -29,8 +29,8 @@ jobs:
       - name: Initialize mise environment
         shell: bash
         run: |
-          echo 'eval "$(mise activate bash)"' >> "$BASH_ENV"
-          source "$BASH_ENV"
+          echo 'eval "$(~/.local/bin/mise activate bash)"' >> ~/.bashrc
+          source "~/.bashrc"
 
       - name: Install Rojo via mise
         run: mise install rojo
