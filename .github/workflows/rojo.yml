@@ -16,25 +16,35 @@ jobs:
       - name: Checkout files
         uses: actions/checkout@v4
 
-      - name: Show current directory
-        run: pwd
+      - name: Install mise
+        run: |
+          sudo apt update -y && sudo apt install -y curl
+          sudo install -dm 755 /etc/apt/keyrings
+          curl -fSs https://mise.jdx.dev/gpg-key.pub | sudo tee /etc/apt/keyrings/mise-archive-keyring.pub > /dev/null
+          echo "deb [signed-by=/etc/apt/keyrings/mise-archive-keyring.pub arch=amd64] https://mise.jdx.dev/deb stable main" \
+            | sudo tee /etc/apt/sources.list.d/mise.list
+          sudo apt update
+          sudo apt install -y mise
 
-      - name: List all files recursively
-        run: ls -alR
+      - name: Initialize mise environment
+        shell: bash
+        run: |
+          echo 'eval "$(mise activate bash)"' >> "$BASH_ENV"
+          source "$BASH_ENV"
 
-      - name: Show Rojo version
-        run: ./rojo --version || echo "Rojo not installed yet"
+      - name: Install Rojo via mise
+        run: mise install rojo
 
-      - name: Build
-        uses: CompeyDev/rojo-build-action@0.1.5
-        with:
-          output: PaoPaoDataStore
-          type: rbxm
+      - name: Verify Rojo
+        run: rojo --version || rojo --version || true
+
+      - name: Build RBXM using Rojo
+        run: rojo build -o PaoPaoDataStore.rbxm
 
       - name: List files after build
         run: ls -alR
 
-      - name: Check the built RBXM file
+      - name: Check built RBXM file
         run: file PaoPaoDataStore.rbxm || echo "RBXM file not found"
 
       - name: Upload artifact
