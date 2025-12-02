@@ -39,6 +39,9 @@ jobs:
           restore-keys: |
             mkdocs-material-
 
+      - name: Make venv
+        run: uv venv .venv
+
       - name: Install dependencies
         run: uv pip install --upgrade -r requirements.txt
 
