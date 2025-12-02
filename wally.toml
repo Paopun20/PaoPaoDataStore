@@ -8,4 +8,4 @@ license = "MIT"
 repository = "https://github.com/Paopun20/PaoPaoDataStore"
 bugs = "https://github.com/Paopun20/PaoPaoDataStore/issues"
 homepage = "https://github.com/Paopun20/PaoPaoDataStore"
-exclude = [".github/*", "docs/*", "extra/*", "LICENSE", "**/*.md", "**/*.yml", "**/*.txt"]
+exclude = [".github/*", "docs/*", "extra/*", "**/*.md", "**/*.yml", "**/*.txt"]
