@@ -4,7 +4,7 @@ on:
   workflow_dispatch: {}
 
 jobs:
-  prepare-wally-branch:
+  publish-wally-package:
     runs-on: windows-latest
 
     steps:
@@ -18,34 +18,27 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-      # Show repo root for debug
-      - name: List files before copy
-        run: dir
-
-      # Cleanup root folder
-      - name: Cleanup root folder
-        shell: bash
+      # Install Wally (Using the cleaner PowerShell method)
+      - name: Download and Add Wally CLI to Path
+        id: install_wally
         run: |
-          find . -maxdepth 1 ! -name "temp" ! -name "src" ! -name "default.project.json" ! -name "wally.toml" ! -name "." ! -name ".." -exec rm -rf {} +
-          echo ">>> Cleaned up unnecessary files"
-          ls -alR
+          $wally_version = "v0.3.2"
+          $wally_dir = "$env:RUNNER_TEMP\wally"
+          
+          mkdir $wally_dir
+          Invoke-WebRequest -Uri "https://github.com/UpliftGames/wally/releases/download/$wally_version/wally-$wally_version-win64.zip" -OutFile "$wally_dir\wally.zip"
+          
+          Expand-Archive -Path "$wally_dir\wally.zip" -DestinationPath $wally_dir -Force
+          Remove-Item "$wally_dir\wally.zip"
+          
+          # This line adds the folder to the PATH for subsequent steps
+          echo "$wally_dir" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+        shell: powershell
 
-      # Download & install Wally
-      - name: Download Wally CLI
-        run: |
-          curl -L https://github.com/UpliftGames/wally/releases/download/v0.3.2/wally-v0.3.2-win64.zip -o wally.zip
-          tar -xf wally.zip
-          move wally.exe C:\Windows\System32\
-          del wally.zip
+      # CRITICAL STEP: Log in to create a persistent session/credential file
+      - name: Wally Login
+        run: wally login
       
-      - name: Wally login
-        env:
-          WALLY_TOKEN: ${{ secrets.WALLY_TOKEN }}
-        run: wally login --token "${{ secrets.WALLY_TOKEN }}"
-
-      # Wally login & publish
+      # Publish (Now using the saved credential)
       - name: Wally Publish
-        env:
-          WALLY_TOKEN: ${{ secrets.WALLY_TOKEN }}
-        run: |
-          wally publish --verbose
+        run: wally publish --verbose
