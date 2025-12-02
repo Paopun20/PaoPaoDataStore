@@ -1,135 +1,158 @@
-site_name: "PaoPao's DataStore Module"
+# Project Information
+site_name: "PaoPao's DataStore Module (PPDS)"
 site_description: "High-performance, caching, migration-friendly DataStore wrapper for Roblox games."
 site_author: "PaoPaoDev (Paopun20)"
 site_url: https://paopun20.github.io/PaoPaoDataStore/
 repo_url: https://github.com/Paopun20/PaoPaoDataStore
-repo_name: "PaoPao's DataStore Module"
+repo_name: "PaoPao's DataStore Module (PPDS)"
 
-# Copyright
-copyright: "Licensed under the Apache License 2.0"
+# Copyright - Corrected to match the actual license
+copyright: "Copyright &copy; 2025 PaoPaoDev - Licensed under the MIT"
 
 theme:
   name: material
   icon:
-    logo: material/database
-  favicon:
-    images/favicon.png
+    logo: material/database # Represents DataStore functionality
+  favicon: images/favicon.png
   font:
     text: Roboto
     code: Roboto Mono
 
   features:
-    # code block enhancements
-    - content.code.copy
-    - content.code.annotate
-    - content.code.select
-    - content.code.highlight
-    - content.code.line-numbers
-    - navigation.expand
-    - navigation.indexes
-    - content.tabs.link
-    - navigation.tabs
-    - navigation.sections
-    - navigation.top
-    - search.highlight
-    - search.share
-    - search.suggest
-    - toc.integrate
-    - content.code.back-to-top
+    # Content Features
+    - content.code.copy # Enable copy button for code blocks
+    - content.code.annotate # Enable annotations in code blocks
+    - content.code.select # Enable selection highlighting
+    - content.code.highlight # Enable syntax highlighting
+    - content.code.line-numbers # Add line numbers to code blocks
+    - content.tabs.link # Link tabs for better navigation
+    # Navigation Features
+    - navigation.expand # Expand navigation sections by default
+    - navigation.indexes # Include index pages in navigation
+    - navigation.tabs # Use tabs for top-level navigation
+    - navigation.sections # Group navigation items into sections
+    - navigation.top # Add a back-to-top button
+    # Search Features
+    - search.highlight # Highlight search terms on page
+    - search.share # Enable sharing search queries
+    - search.suggest # Provide search suggestions
+    # Table of Contents
+    - toc.integrate # Integrate TOC with navigation sidebar
+    # Back to Top
+    - content.code.back-to-top # Add back-to-top button for code blocks
 
   palette:
+    # Palette toggle for automatic switching based on system preference
     - media: "(prefers-color-scheme)"
+      scheme: default
+      primary: indigo
+      accent: indigo
       toggle:
-        icon: material/link
+        icon: material/lightbulb-auto
         name: Switch to light mode
+    # Palette for light mode
     - media: "(prefers-color-scheme: light)"
       scheme: default
       primary: indigo
       accent: indigo
       toggle:
-        icon: material/toggle-switch
+        icon: material/lightbulb
         name: Switch to dark mode
+    # Palette for dark mode
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
       primary: black
       accent: indigo
       toggle:
-        icon: material/toggle-switch-off
+        icon: material/lightbulb-outline
         name: Switch to system preference
+
+  highlightjs: true
+  hljs_languages:
+    - luau
 
 nav:
   - Home: index.md
   - tutorial:
       - Setup: tutorial/setup.md
-  - Reference: 
+  - Reference:
       - API Reference: reference/api.md
 
 plugins:
   - search:
       separator: '[\s\u200b\-_,:!=\[\]()"`/]+|\.(?!\d)|&[lg]t;|(?!\b)(?=[A-Z][a-z])'
+  - minify:
+      minify_html: true
+  - git-revision-date-localized: # Optional: Show last updated date
+      type: date
+      fallback_to_build_date: true
 
-# Additional configuration
 extra:
   status:
-    new: Recently added
+    new: New
     deprecated: Deprecated
-  analytics:
-    provider: google
-    property: !ENV GOOGLE_ANALYTICS_KEY
+    experimental: Experimental
+  repo_icon: material/github
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/Paopun20
 
+# Markdown Extensions (Enhanced)
 markdown_extensions:
+  # Standard Markdown Extensions
   - abbr
-  - admonition
-  - attr_list
+  - admonition # For callout blocks (notes, warnings, etc.)
+  - attr_list # For adding attributes to Markdown elements
   - def_list
   - footnotes
-  - md_in_html
+  - md_in_html # Allow Markdown inside HTML blocks
   - toc:
-      permalink: true
-  - pymdownx.arithmatex:
+      permalink: true # Add permalink anchors to headings
+
+  # PyMdown Extensions (Highly recommended for Material)
+  - pymdownx.arithmatex: # For LaTeX math rendering
       generic: true
-  - pymdownx.betterem:
+  - pymdownx.betterem: # Improved emphasis handling
       smart_enable: all
-  - pymdownx.caret
-  - pymdownx.details
-  - pymdownx.emoji:
+  - pymdownx.caret # For inserting superscript/subscript
+  - pymdownx.details # For collapsible details/summary elements
+  - pymdownx.emoji: # For emoji support
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
       emoji_index: !!python/name:material.extensions.emoji.twemoji
-  - pymdownx.highlight:
+  - pymdownx.highlight: # Enhanced code highlighting
       anchor_linenums: true
       line_spans: __span
       pygments_lang_class: true
-  - pymdownx.inlinehilite
-  - pymdownx.keys
-  - pymdownx.magiclink:
+  - pymdownx.inlinehilite # For highlighting inline code
+  - pymdownx.keys # For keyboard key formatting
+  - pymdownx.magiclink: # Automatically link GitHub issues, commits, etc.
       normalize_issue_symbols: true
       repo_url_shorthand: true
-      user: squidfunk
-      repo: mkdocs-material
-  - pymdownx.mark
-  - pymdownx.smartsymbols
-  - pymdownx.snippets:
+      user: Paopun20 # GitHub username
+      repo: PaoPaoDataStore # GitHub repository name
+  - pymdownx.mark # For highlighting text
+  - pymdownx.smartsymbols # For smart quotes, arrows, etc.
+  - pymdownx.snippets: # For including external files in docs
       auto_append:
-        - includes/mkdocs.md
-  - pymdownx.superfences:
+        - includes/mkdocs.md # Example include file
+  - pymdownx.superfences: # Enhanced code fences
       custom_fences:
-        - name: mermaid
+        - name: mermaid # For Mermaid diagrams (like the one shown on the site)
           class: mermaid
           format: !!python/name:pymdownx.superfences.fence_code_format
-  - pymdownx.tabbed:
+  - pymdownx.tabbed: # For tabbed content
       alternate_style: true
       combine_header_slug: true
       slugify: !!python/object/apply:pymdownx.slugs.slugify
         kwds:
           case: lower
-  - pymdownx.tasklist:
+  - pymdownx.tasklist: # For checklists
       custom_checkbox: true
-  - pymdownx.tilde
-  - pymdownx.critic
+  - pymdownx.tilde # For strikethrough text
 
 extra_javascript:
-  - extra/javascript/mathjax.js
-  - extra/javascript/katex.js
+  - ./extra/javascript/mathjax.js
+  - ./extra/javascript/katex.js
 
   - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
   - https://unpkg.com/katex@0/dist/katex.min.js

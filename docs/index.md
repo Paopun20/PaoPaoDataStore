@@ -1,6 +1,6 @@
-# PaoPao's DataStore Module (PPDS)
+# PaoPao's DataStore Module (PPDB)
 
-PPDS is a high-performance Roblox DataStore wrapper that simplifies the management of persistent data with advanced caching, cross-server synchronization, and migration capabilities. It is designed to be robust, efficient, and developer-friendly, allowing you to focus on creating engaging gameplay experiences without worrying about the complexities of data storage.
+PPDB is a high-performance Roblox DataStore wrapper that simplifies the management of persistent data with advanced caching, cross-server synchronization, and migration capabilities. It is designed to be robust, efficient, and developer-friendly, allowing you to focus on creating engaging gameplay experiences without worrying about the complexities of data storage.
 
 ## Features
 
@@ -17,7 +17,7 @@ PPDS is a high-performance Roblox DataStore wrapper that simplifies the manageme
 ``` mermaid
 graph TD
     %% Requests
-    A[Server Request] --> B(PPDS: init / get / set / update / increment / leave)
+    A[Server Request] --> B(PPDB: init / get / set / update / increment / leave)
     
     %% Cache Flow
     B --> C{Cache Hit?}
@@ -56,7 +56,7 @@ graph TD
 
 ## Quick Start
 
-To get started with PPDS, check out the detailed documentation and tutorials:
+To get started with PPDB, check out the detailed documentation and tutorials:
 
 [Getting Started Guide](./tutorial/setup.md){ .md-button }
 [API Reference](./reference/api.md){ .md-button }
@@ -65,9 +65,9 @@ To get started with PPDS, check out the detailed documentation and tutorials:
 
 ## License
 
-PPDS is released under the **Apache License 2.0**. This permissive license allows you to use, modify, and distribute PPDS in both personal and commercial projects.
+PPDB is released under the **MIT**. This permissive license allows you to use, modify, and distribute PPDB in both personal and commercial projects.
 
-[See the LICENSE file for complete details.](https://raw.githubusercontent.com/Paopun20/PaoPaoDataStore/main/LICENSE){ .md-button }
+[See the LICENSE file for complete details.](https://raw.githubusercontent.com/Paopun20/PaoPaoDataStore/main/LICENSE  ){ .md-button }
 
 ---
 
@@ -76,14 +76,14 @@ PPDS is released under the **Apache License 2.0**. This permissive license allow
 !!! note "note 1 (Important)"
 
     !!! note "sub-note 1"
-        PPDS represents a production-ready DataStore solution with enterprise features. While the API is stable, we continuously improve performance and add features based on community feedback.
+        PPDB represents a production-ready DataStore solution with enterprise features. While the API is stable, we continuously improve performance and add features based on community feedback.
         
     !!! note "sub-note 2 (A Very Important!)"
 
         some api changes may occur in the future, so please check back regularly for updates, not 100% guaranteed that the api will not change, but i will try to keep it stable.
 
     !!! note "sub-note 3"
-        If you encounter any issues or have suggestions for improvement, please open an issue on the [GitHub repository](https://github.com/Paopun20/PaoPaoDataStore/issues) but good /w pull request and bug fixes in pull request.
+        If you encounter any issues or have suggestions for improvement, please open an issue on the [GitHub repository](https://github.com/Paopun20/PaoPaoDataStore/issues  ) but good /w pull request and bug fixes in pull request.
 
 <img src="./media/images/0512.gif" alt="lol" width="300">
-<img src="https://media1.tenor.com/m/KuoTTmJ6o40AAAAC/get-real-cat.gif" alt="Funny Cat">
+<img src="https://media1.tenor.com/m/KuoTTmJ6o40AAAAC/get-real-cat.gif  " alt="Funny Cat">

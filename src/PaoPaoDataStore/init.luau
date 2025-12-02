@@ -2,21 +2,17 @@
 --!optimize 2
 --!native
 
--- ============================================================================
 -- PPDB – PaoPao's DataStore Module
 -- High-performance, caching, migration-friendly DataStore wrapper
 -- Copyright 2025 PaoPaoDev
--- Licensed under Apache 2.0
--- ============================================================================
+-- Licensed under MIT
 
 local DataStoreService = game:GetService("DataStoreService")
 local MemoryStoreService = game:GetService("MemoryStoreService")
 local HttpService = game:GetService("HttpService")
 local RunService = game:GetService("RunService")
 
--- ============================================================================
 -- Helpers
--- ============================================================================
 
 local function deepCopy(t)
 	if type(t) ~= "table" then
@@ -29,9 +25,7 @@ local function deepCopy(t)
 	return copy
 end
 
--- ============================================================================
 -- Signal Class
--- ============================================================================
 
 local Signal = {}
 Signal.__index = Signal
@@ -59,16 +53,12 @@ function Signal:Fire(...)
 	end
 end
 
--- ============================================================================
 -- Main Module
--- ============================================================================
 
 local PPDB = {}
 PPDB.__index = PPDB
 
--- ============================================================================
 -- Options Helper
--- ============================================================================
 
 PPDB.DBOptions = {}
 PPDB.DBOptions.__index = PPDB.DBOptions
@@ -80,9 +70,7 @@ function PPDB.DBOptions.new()
 	}, PPDB.DBOptions)
 end
 
--- ============================================================================
 -- Globals
--- ============================================================================
 
 local GLOBAL_CACHE = {}
 local WRITE_QUEUE = {}
@@ -92,9 +80,7 @@ local RETRY_DELAY = 0.5
 local INSTANCES = {}
 local _boundToClose = false
 
--- ============================================================================
 -- Constructor
--- ============================================================================
 
 function PPDB.new(name: string, DBOptions: PPDB.DBOptions?)
 	DBOptions = DBOptions or PPDB.DBOptions.new()
@@ -136,9 +122,7 @@ function PPDB.new(name: string, DBOptions: PPDB.DBOptions?)
 	return self
 end
 
--- ============================================================================
 -- Private Helpers
--- ============================================================================
 
 function PPDB:_retryOperation(fn)
 	for i = 1, MAX_RETRIES do
@@ -179,9 +163,7 @@ function PPDB:_acquireLock(key: string)
 	return false
 end
 
--- ============================================================================
 -- Core Methods
--- ============================================================================
 
 function PPDB:init(key: string, defaultData: table?, cb: ((boolean, any) -> ())?)
 	if self._cache[key] then
@@ -239,7 +221,7 @@ function PPDB:get(key: string, default: any?, ttl: number?)
 	end
 	data._t = tick()
 	self._cache[key] = data
-	self.OnInit:Fire(key, data)
+	-- Removed the bug: self.OnInit:Fire(key, data)  -- This was incorrectly firing OnInit for every get
 	return data
 end
 
@@ -274,9 +256,7 @@ function PPDB:increment(key: string, field: string, amount: number)
 	end)
 end
 
--- ============================================================================
 -- Write Flush with Queue Lock Wait
--- ============================================================================
 
 function PPDB:_scheduleWriteFlush(key: string)
 	if WRITE_QUEUE[key] then
@@ -331,9 +311,7 @@ function PPDB:leave(key: string)
 	end
 end
 
--- ============================================================================
 -- Cache Cleanup
--- ============================================================================
 
 function PPDB:cleanCache(ttl: number?)
 	ttl = ttl or 3600
@@ -344,9 +322,7 @@ function PPDB:cleanCache(ttl: number?)
 	end
 end
 
--- ============================================================================
 -- Export / Import
--- ============================================================================
 
 function PPDB:export()
 	return deepCopy(self._cache)

@@ -1,18 +1,18 @@
-# PPDS API Reference
+# PPDB API Reference
 
-**PPDS (PaoPao's DataStore Module)** – A high-performance, caching, migration-friendly DataStore wrapper with cross-server synchronization.
+**PPDB (PaoPao's DataStore Module)** – A high-performance, caching, migration-friendly DataStore wrapper with cross-server synchronization.
 
 ---
 
 ## Overview
 
-PPDS provides a robust caching layer over Roblox DataStore with advanced features:
+PPDB provides a robust caching layer over Roblox DataStore with advanced features:
 
 * **Global shared cache** across all instances
 * **Cross-server lock mechanisms** for data safety
 * **Automatic migration system** for data structure updates
 * **Event-driven architecture** with signals
-* **Exponential backoff retry logic**
+* **Retry logic with exponential backoff**
 
 ---
 
@@ -20,20 +20,20 @@ PPDS provides a robust caching layer over Roblox DataStore with advanced feature
 
 ### Basic Setup
 
-```lua
-local PPDS = require(path.to.PPDS)
+```luau
+local PPDB = require(path.to.PPDB)
 
 -- Create DBOptions object
-local options = PPDS.DBOptions.new()
+local options = PPDB.DBOptions.new()
 options.debug = true
 
 -- Create a database instance
-local db = PPDS.new("PlayerData", options)
+local db = PPDB.new("PlayerData", options)
 ```
 
 ### Quick Example
 
-```lua
+```luau
 -- Initialize player data
 db:init("Player_12345", { coins = 0, level = 1 }, function(success, data)
     if success then
@@ -52,34 +52,41 @@ end)
 
 ## Constructor
 
-### **PPDS.new(name, DBOptions)**
+### **PPDB.new(name, DBOptions)**
 
 Creates a new database instance with global cache sharing.
 
 **Parameters:**
 
 * `name` *(string)* – DataStore name – multiple instances with same name share cache
-* `DBOptions` *(PPDS.DBOptions, optional)*:
+* `DBOptions` *(PPDB.DBOptions, optional)*:
 
   * `debug` *(boolean)*: Enable debug logging
+  * `migrations` *(table)*: Array of migration functions
 
-**Returns:** PPDS instance with event signals and automatic cleanup
+**Returns:** PPDB instance with event signals and automatic cleanup
 
 **Example:**
 
-```lua
+```luau
 -- Create a new database instance with DBOptions
-local options = PPDS.DBOptions.new()
+local options = PPDB.DBOptions.new()
 options.debug = true
+options.migrations = {
+    function(data) -- Migration 1
+        data.level = data.level or 1
+        return data
+    end
+}
 
-local db = PPDS.new("PlayerData", options)
+local db = PPDB.new("PlayerData", options)
 ```
 
 ---
 
 ## Core Data Operations
 
-### **PPDS:init(key, defaultData, callback)**
+### **PPDB:init(key, defaultData, callback)**
 
 Asynchronously initializes a key with default data if not exists.
 
@@ -89,74 +96,94 @@ Asynchronously initializes a key with default data if not exists.
 * `defaultData` *(table)* – Default data structure
 * `callback` *(function, optional)* – `(success: boolean, data: table) -> ()`
 
-**Returns:** Cached data immediately if available; `nil` otherwise
+**Returns:** Cached data immediately if available; `defaultData` otherwise
 
----
-
-### **PPDS:get(key, default, ttl)**
+### **PPDB:get(key, default, ttl)**
 
 Synchronously fetches data from cache or DataStore with fallback.
 
----
+**Parameters:**
 
-### **PPDS:set(key, value)**
+* `key` *(string)* – Data key to retrieve
+* `default` *(any, optional)* – Default value if not found
+* `ttl` *(number, optional)* – Time-to-live in seconds for cache expiration
+
+**Returns:** Cached data or loaded data from DataStore
+
+### **PPDB:set(key, value)**
 
 Updates cache and schedules asynchronous DataStore write.
 
----
+**Parameters:**
 
-### **PPDS:update(key, fn)**
+* `key` *(string)* – Data key to update
+* `value` *(table)* – New data value (must be a table)
+
+### **PPDB:update(key, fn)**
 
 Safely updates data using a transformation function.
 
----
+**Parameters:**
 
-### **PPDS:increment(key, field, amount)**
+* `key` *(string)* – Data key to update
+* `fn` *(function)* – Transformation function: `(currentData: table) -> newData: table`
+
+### **PPDB:increment(key, field, amount)**
 
 Atomically increments a numeric field.
 
----
+**Parameters:**
 
-### **PPDS:leave(key)**
+* `key` *(string)* – Data key to update
+* `field` *(string)* – Field name to increment
+* `amount` *(number, optional)* – Amount to increment (default: 1)
+
+### **PPDB:leave(key)**
 
 Immediately saves data and removes from cache. Fires `OnDelete` event.
+
+**Parameters:**
+
+* `key` *(string)* – Data key to save and remove from cache
 
 ---
 
 ## Cache Management
 
-* **PPDS:cleanCache(ttl?)** – Remove expired entries
-* **PPDS:flushWrites()** – Force immediate save of all cached data
+* **PPDB:cleanCache(ttl?)** – Remove expired entries based on TTL
+* **PPDB:flushWrites()** – Force immediate save of all cached data
 
 ---
 
 ## Events
 
-* **OnInit** – Fired when data is loaded or initialized
-* **OnSave** – Fired when data is saved to DataStore
-* **OnDelete** – Fired when data is removed from cache
-* **OnInvalidate** – Fired when data should be refreshed (cross-server sync)
+* **OnInit** – Fired when data is loaded or initialized: `(key: string, data: table)`
+* **OnSave** – Fired when data is saved to DataStore: `(key: string, data: table)`
+* **OnDelete** – Fired when data is removed from cache: `(key: string)`
+* **OnInvalidate** – Fired when data should be refreshed (cross-server sync): `(key: string)`
 
 ---
 
 ## Best Practices
 
 * Use `update()` for atomic operations
-* Call `leave()` on player removal
-* Periodically run `cleanCache()`
+* Call `leave()` on player removal to ensure data is saved
+* Periodically run `cleanCache()` to manage memory
 * Monitor important events via `OnSave` and `OnInit`
+* Use migrations to handle data structure changes
 
 ---
 
 ## Development Tools
 
-* **PPDS:export()** – Deep copy snapshot of cache
-* **PPDS:import(tbl, overwrite)** – Load table into cache
+* **PPDB:export()** – Deep copy snapshot of current cache
+* **PPDB:import(tbl, overwrite)** – Load table data into cache
 
 ---
 
 ## Performance Notes
 
-* JSON caching prevents redundant serialization
-* Delayed write batching reduces DataStore calls
+* Global caching prevents redundant DataStore calls
+* Write queuing reduces DataStore operation frequency
 * Automatic cache expiration manages memory usage
+* Cross-server locking ensures data consistency
