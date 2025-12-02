@@ -35,7 +35,7 @@ jobs:
           restore-keys: |
             mkdocs-material-
 
-      - name: Make venv
+      - name: Setup venv
         run: uv venv .venv
 
       - name: Install dependencies
