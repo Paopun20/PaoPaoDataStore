@@ -4,17 +4,18 @@ PPDB is a high-performance Roblox DataStore wrapper that simplifies the manageme
 
 ## Features
 
-- **Global Shared Cache**: Data is cached across all server instances, ensuring consistency and reducing DataStore calls.
-- **Cross-Server Locking**: Prevents data corruption from concurrent writes across multiple servers using MemoryStoreService.
-- **Automatic Data Migrations**: Seamlessly update your data structure over time without losing player data.
-- **Event-Driven Architecture**: Integrate with your game logic using `OnInit`, `OnSave`, `OnDelete`, and `OnInvalidate` events.
-- **Robust Error Handling**: Built-in exponential backoff retry logic for DataStore operations.
-- **Session Management**: Efficiently handle player data loading, saving, and cleanup.
-- **Development Tools**: Export/import cache snapshots for debugging and testing.
+## Overview
+
+* **Global shared cache** – Unified cache across all instances for fast, consistent reads.
+* **Non-blocking read/write with Shadow Copy** – Uses snapshot copies of data before writing, ensuring reads never block writes and writes never block reads.
+* **Automatic migration system** – Run migration functions to safely update data structures over time.
+* **Event-driven architecture** – Signals like `OnInit`, `OnSave`, and `OnDelete` allow real-time reaction to data changes.
+* **Retry logic with exponential backoff** – Handles transient DataStore failures gracefully with configurable retries.
+* **Optional debug mode** – Logs operations, retries, and migration issues for easier troubleshooting.
 
 ## How it work (not full details yet)
 
-``` mermaid
+```mermaid
 graph TD
     %% Requests
     A[Server Request] --> B(PPDB: init / get / set / update / increment / leave)
@@ -39,17 +40,25 @@ graph TD
     J --> K[Cross-Server Sync / Invalidation]
     K --> L[Other Servers / Clients]
     
-    %% Async Write Path
-    B -- set / update / increment --> M[Queue for Async Write]
+    %% Async Write Path with Shadow Copy
+    B -- set / update / increment --> M[Create Shadow Copy / Queue for Async Write]
     M --> N[DataStore Write Batching]
     N --> O[DataStore Save]
     O -- Success --> P[Trigger OnSave Event]
     O -- Failure --> Q[Retry / Error Handling]
     
+    %% Classes / Outline Colors Only
+    classDef cache stroke:#2f7a2f,stroke-width:2px;
+    classDef datastore stroke:#1f4f7a,stroke-width:2px;
+    classDef async stroke:#7a4f1f,stroke-width:2px;
+    classDef events stroke:#6a1f7a,stroke-width:2px;
+    classDef shadow stroke:#f39c12,stroke-width:2px; %% Orange outline for shadow copy
+    
     class C,D,G cache;
     class E,F,H,O,N datastore;
-    class J,K,L,P events;
     class M,Q async;
+    class J,K,L,P events;
+    class M shadow;
 ```
 
 ---

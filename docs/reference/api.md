@@ -1,18 +1,6 @@
 # PPDB API Reference
 
-**PPDB (PaoPao's DataStore Module)** – A high-performance, caching, migration-friendly DataStore wrapper with cross-server synchronization.
 
----
-
-## Overview
-
-PPDB provides a robust caching layer over Roblox DataStore with advanced features:
-
-* **Global shared cache** across all instances
-* **Cross-server lock mechanisms** for data safety
-* **Automatic migration system** for data structure updates
-* **Event-driven architecture** with signals
-* **Retry logic with exponential backoff**
 
 ---
 

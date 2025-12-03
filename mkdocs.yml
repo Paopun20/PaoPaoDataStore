@@ -151,9 +151,12 @@ markdown_extensions:
   - pymdownx.tilde # For strikethrough text
 
 extra_javascript:
-  - ./extra/javascript/mathjax.js
-  - ./extra/javascript/katex.js
+  - path: extra/javascripts/exec.js
+    defer: true
+  - path: extra/javascripts/mathjax.js
+  - path: extra/javascripts/katex.js
+    type: module
 
-  - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
-  - https://unpkg.com/katex@0/dist/katex.min.js
-  - https://unpkg.com/katex@0/dist/contrib/auto-render.min.js
+  - path: https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
+  - path: https://unpkg.com/katex@0/dist/katex.min.js
+  - path: https://unpkg.com/katex@0/dist/contrib/auto-render.min.js
