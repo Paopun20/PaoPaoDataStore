@@ -1,171 +1,194 @@
 # PPDB API Reference
 
+## Creating an Instance
 
+### `PPDB.new(name: string, options?: DBOptions): PPDB`
 
----
+Creates (or attaches to) a DataStore-backed PPDB instance.
 
-## Getting Started
+* `name` — DataStore name
+* `options` — Optional `DBOptions`
 
-### Basic Setup
+**Notes**
 
-```luau
-local PPDB = require(path.to.PPDB)
-
--- Create DBOptions object
-local options = PPDB.DBOptions.new()
-options.debug = true
-
--- Create a database instance
-local db = PPDB.new("PlayerData", options)
-```
-
-### Quick Example
-
-```luau
--- Initialize player data
-db:init("Player_12345", { coins = 0, level = 1 }, function(success, data)
-    if success then
-        print("Player loaded:", data.coins, "coins")
-    end
-end)
-
--- Update data safely
-db:update("Player_12345", function(data)
-    data.coins = data.coins + 100
-    return data
-end)
-```
+* Instances with the same `name` share a global in-memory cache.
+* Automatically binds a shutdown handler on first creation.
 
 ---
 
-## Constructor
+## DBOptions
 
-### **PPDB.new(name, DBOptions)**
+### `DBOptions.new(): DBOptions`
 
-Creates a new database instance with global cache sharing.
+Creates an options object.
 
-**Parameters:**
+**Fields**
 
-* `name` *(string)* – DataStore name – multiple instances with same name share cache
-* `DBOptions` *(PPDB.DBOptions, optional)*:
-
-  * `debug` *(boolean)*: Enable debug logging
-  * `migrations` *(table)*: Array of migration functions
-
-**Returns:** PPDB instance with event signals and automatic cleanup
-
-**Example:**
-
-```luau
--- Create a new database instance with DBOptions
-local options = PPDB.DBOptions.new()
-options.debug = true
-options.migrations = {
-    function(data) -- Migration 1
-        data.level = data.level or 1
-        return data
-    end
-}
-
-local db = PPDB.new("PlayerData", options)
-```
+* `debug: boolean` — Enables verbose warnings and logs
+* `migrations: { (data: table) -> table }[]` — Ordered migration functions
 
 ---
 
-## Core Data Operations
+## Lifecycle Signals
 
-### **PPDB:init(key, defaultData, callback)**
+### `OnInit: Signal`
 
-Asynchronously initializes a key with default data if not exists.
+Fired when a key finishes loading and is cached.
 
-**Parameters:**
+**Callback**: `(key: string, data: table)`
 
-* `key` *(string)* – The data key to initialize
-* `defaultData` *(table)* – Default data structure
-* `callback` *(function, optional)* – `(success: boolean, data: table) -> ()`
+### `OnSave: Signal`
 
-**Returns:** Cached data immediately if available; `defaultData` otherwise
+Fired when a key is set or updated.
 
-### **PPDB:get(key, default, ttl)**
+**Callback**: `(key: string, data: table)`
 
-Synchronously fetches data from cache or DataStore with fallback.
+### `OnDelete: Signal`
 
-**Parameters:**
+Fired when a key is removed from cache via `leave()`.
 
-* `key` *(string)* – Data key to retrieve
-* `default` *(any, optional)* – Default value if not found
-* `ttl` *(number, optional)* – Time-to-live in seconds for cache expiration
+**Callback**: `(key: string)`
 
-**Returns:** Cached data or loaded data from DataStore
+### `OnInvalidate: Signal`
 
-### **PPDB:set(key, value)**
+Reserved for future cross-server invalidation support.
 
-Updates cache and schedules asynchronous DataStore write.
+---
 
-**Parameters:**
+## Core Methods
 
-* `key` *(string)* – Data key to update
-* `value` *(table)* – New data value (must be a table)
+### `init(key: string, defaultData?: table, callback?: (success: boolean, data: any) -> ()) : any`
 
-### **PPDB:update(key, fn)**
+Initializes and asynchronously loads a key.
 
-Safely updates data using a transformation function.
+**Behavior**
 
-**Parameters:**
+* Returns cached data immediately if present
+* If loading is in progress, queues callbacks
+* Runs migrations after load
 
-* `key` *(string)* – Data key to update
-* `fn` *(function)* – Transformation function: `(currentData: table) -> newData: table`
+**Returns**
 
-### **PPDB:increment(key, field, amount)**
+* Cached data if available
+* Otherwise `defaultData`
 
-Atomically increments a numeric field.
+---
 
-**Parameters:**
+### `get(key: string, default?: any, ttl?: number): any`
 
-* `key` *(string)* – Data key to update
-* `field` *(string)* – Field name to increment
-* `amount` *(number, optional)* – Amount to increment (default: 1)
+Fetches data from cache or DataStore.
 
-### **PPDB:leave(key)**
+* `ttl` — Optional cache TTL in seconds
 
-Immediately saves data and removes from cache. Fires `OnDelete` event.
+---
 
-**Parameters:**
+### `set(key: string, value: table): boolean`
 
-* `key` *(string)* – Data key to save and remove from cache
+Sets and caches a value, scheduling an async write.
+
+* Adds/updates internal timestamp `_t`
+
+---
+
+### `update(key: string, fn: (data: table) -> table): boolean`
+
+Atomically updates cached data using a transform function.
+
+* Receives a deep copy of current data
+* Result replaces cached value if valid
+
+---
+
+### `increment(key: string, field: string, amount?: number): boolean`
+
+Convenience helper to increment numeric fields.
+
+* Defaults `amount` to `1`
+* Warns if field is non-numeric
+
+---
+
+## Write Control
+
+### `flushWrites(): ()`
+
+Schedules async writes for all cached keys.
+
+### `flushWritesSync(): ()`
+
+Synchronously writes all cached data.
+
+**Intended for shutdown use only.**
+
+---
+
+## Session Management
+
+### `leave(key: string, callback?: (success: boolean) -> ()): ()`
+
+Flushes and removes a key from cache.
+
+* Acquires a soft lock
+* Fires `OnDelete`
 
 ---
 
 ## Cache Management
 
-* **PPDB:cleanCache(ttl?)** – Remove expired entries based on TTL
-* **PPDB:flushWrites()** – Force immediate save of all cached data
+### `cleanCache(ttl?: number): number`
+
+Removes expired cache entries.
+
+* `ttl` defaults to 3600 seconds
+* Returns number of cleaned entries
 
 ---
 
-## Events
+### `enableAutoCleanup(interval?: number, ttl?: number): ()`
 
-* **OnInit** – Fired when data is loaded or initialized: `(key: string, data: table)`
-* **OnSave** – Fired when data is saved to DataStore: `(key: string, data: table)`
-* **OnDelete** – Fired when data is removed from cache: `(key: string)`
-* **OnInvalidate** – Fired when data should be refreshed (cross-server sync): `(key: string)`
+Starts a background cleanup loop.
 
----
-
-## Best Practices
-
-* Use `update()` for atomic operations
-* Call `leave()` on player removal to ensure data is saved
-* Periodically run `cleanCache()` to manage memory
-* Monitor important events via `OnSave` and `OnInit`
-* Use migrations to handle data structure changes
+* `interval` defaults to 300 seconds
+* `ttl` defaults to 3600 seconds
 
 ---
 
-## Development Tools
+## Import / Export
 
-* **PPDB:export()** – Deep copy snapshot of current cache
-* **PPDB:import(tbl, overwrite)** – Load table data into cache
+### `export(): table`
+
+Returns a deep copy of the current cache.
+
+### `import(data: table, overwrite?: boolean): number`
+
+Imports key-value pairs into cache.
+
+* `overwrite` replaces existing keys
+* Returns number of imported entries
+
+---
+
+## Utilities
+
+### `waitForKey(key: string, timeout?: number): any?`
+
+Blocks until a key is cached or timeout expires.
+
+* `timeout` defaults to 10 seconds
+
+---
+
+### `isLoading(key: string): boolean`
+
+Returns whether a key is currently loading.
+
+---
+
+## Notes on Concurrency
+
+* PPDB uses soft locking via MemoryStore (best-effort)
+* Writes are last-write-wins
+* Strong cross-server consistency is not guaranteed
 
 ---
 

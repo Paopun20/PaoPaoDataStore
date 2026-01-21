@@ -1,0 +1,15 @@
+{
+  "name": "PPDB_TESTBUILD",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
+      "Package": {
+        "$className": "Folder",
+        "PaoPaoDataStore": {
+          "$path": "src/PaoPaoDataStore"
+        }
+      }
+    }
+  }
+}

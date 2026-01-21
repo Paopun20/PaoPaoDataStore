@@ -81,9 +81,6 @@ nav:
 plugins:
   - search:
       separator: '[\s\u200b\-_,:!=\[\]()"`/]+|\.(?!\d)|&[lg]t;|(?!\b)(?=[A-Z][a-z])'
-  - minify:
-      minify_html: true
-  - git-revision-date-localized: # Optional: Show last updated date
       type: date
       fallback_to_build_date: true
 

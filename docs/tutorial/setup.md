@@ -9,7 +9,7 @@ It **must be used server-side** (e.g., inside `ServerScriptService`).
 
 You have three options to obtain PPDB:
 
-[Roblox Asset Library (Option 1)](https://www.roblox.com/library/95562270661505/  ){ .md-button .md-button--primary }
+[Roblox Asset Library (Option 1, outdated)](https://www.roblox.com/library/95562270661505/  ){ .md-button .md-button--primary }
 [GitHub (Option 2)](https://github.com/Paopun20/PaoPaoDataStore  ){ .md-button .md-button--primary }
 [Wally (Option 3)](https://wally.run/package/paopun20/paopaodatastore  ){ .md-button .md-button--primary }
 
