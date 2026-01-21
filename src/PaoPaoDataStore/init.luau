@@ -235,12 +235,12 @@ function PPDB:init(key: string, defaultData: table?, cb: ((boolean, any) -> ())?
 			return self._store:GetAsync(key)
 		end)
 		data = (ok and data) or defaultData or {}
-		
+
 		-- Ensure data is a table
 		if type(data) ~= "table" then
 			data = defaultData or {}
 		end
-		
+
 		data._t = tick()
 
 		-- Run migrations
@@ -358,11 +358,11 @@ function PPDB:_scheduleWriteFlush(key: string)
 
 			-- Make a copy to avoid race conditions during save
 			local dataToSave = deepCopy(data)
-			
+
 			local success, err = self:_retryOperation(function()
 				self._store:SetAsync(key, dataToSave)
 			end)
-			
+
 			if not success then
 				warn("[PPDB] Write failed for key:", key, err)
 			end
@@ -417,7 +417,7 @@ function PPDB:leave(key: string, callback: ((boolean) -> ())?)
 
 				self._cache[key] = nil
 				self.OnDelete:Fire(key)
-				
+
 				if callback then
 					callback(success)
 				end
@@ -451,7 +451,7 @@ end
 function PPDB:enableAutoCleanup(interval: number?, ttl: number?)
 	interval = interval or 300 -- 5 minutes
 	ttl = ttl or 3600 -- 1 hour
-	
+
 	task.spawn(function()
 		while true do
 			task.wait(interval)
@@ -486,11 +486,11 @@ end
 function PPDB:waitForKey(key: string, timeout: number?): any?
 	timeout = timeout or 10
 	local startTime = tick()
-	
+
 	while not self._cache[key] and tick() - startTime < timeout do
 		task.wait(0.1)
 	end
-	
+
 	return self._cache[key]
 end
 
