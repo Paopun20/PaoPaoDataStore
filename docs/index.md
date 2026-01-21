@@ -393,15 +393,12 @@ It does **not** guarantee:
 ## Notes from Me
 
 !!! note "Important"
-
-```
-- The API is mostly stable, but not frozen
-- Some changes may occur to improve performance or correctness
-- Bug reports and well-justified pull requests are welcome
-- I use some AI tools to write this documentation (btw)
-
-This project prioritizes correctness and real-world usability over theoretical perfection.
-```
+    - The API is mostly stable, but not frozen
+    - Some changes may occur to improve performance or correctness
+    - Bug reports and well-justified pull requests are welcome
+    - I use some AI tools to write this documentation (btw)
+    
+    This project prioritizes correctness and real-world usability over theoretical perfection.
 
 ---
 
